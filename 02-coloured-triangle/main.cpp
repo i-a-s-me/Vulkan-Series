@@ -534,6 +534,19 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 
   vkCmdBeginRendering(cmd, &rendering_info);
 
+  VkViewport viewport = {
+    .width = (float)m_swapchain_extent.width,
+    .height = (float)m_swapchain_extent.height,
+    .minDepth = 0.0f,
+    .maxDepth = 1.0f,
+  };
+  vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+  VkRect2D scissor{
+    .extent = m_swapchain_extent,
+  };
+  vkCmdSetScissor(cmd, 0, 1, &scissor);
+
   vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline);
   vkCmdDraw(cmd, 3, 1, 0, 0);
 
@@ -1099,23 +1112,10 @@ bool SampleVulkan::create_graphics_pipeline()
     .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
   };
 
-  VkViewport viewport{
-    .width = (float)m_swapchain_extent.width,
-    .height = (float)m_swapchain_extent.height,
-    .minDepth = 0.0f,
-    .maxDepth = 1.0f,
-  };
-  VkRect2D scissor{
-    .offset = {},
-    .extent = m_swapchain_extent,
-  };
-
   VkPipelineViewportStateCreateInfo viewport_state_create_info{
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
     .viewportCount = 1,
-    .pViewports = &viewport,
     .scissorCount = 1,
-    .pScissors = &scissor,
   };
 
   VkPipelineRasterizationStateCreateInfo rs_create_info{
@@ -1142,6 +1142,17 @@ bool SampleVulkan::create_graphics_pipeline()
     .pAttachments = &color_blend_attachment_state,
   };
 
+  VkDynamicState dynamic_states[2] = {
+    VK_DYNAMIC_STATE_VIEWPORT,
+    VK_DYNAMIC_STATE_SCISSOR,
+  };
+
+  VkPipelineDynamicStateCreateInfo dynamic_state_create_info{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+    .dynamicStateCount = (sizeof(dynamic_states)/sizeof(dynamic_states[0])),
+    .pDynamicStates = dynamic_states,
+  };
+
   VkGraphicsPipelineCreateInfo create_info{
     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
     .pNext = &rendering_create_info,
@@ -1155,6 +1166,7 @@ bool SampleVulkan::create_graphics_pipeline()
     .pRasterizationState = &rs_create_info,
     .pMultisampleState = &multisample_state_create_info,
     .pColorBlendState = &color_blend_state_create_info,
+    .pDynamicState = &dynamic_state_create_info,
 
     .layout = m_graphics_pipeline_layout,
   };
