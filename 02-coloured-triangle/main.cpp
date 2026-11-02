@@ -534,6 +534,9 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 
   vkCmdBeginRendering(cmd, &rendering_info);
 
+  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline);
+  vkCmdDraw(cmd, 3, 1, 0, 0);
+
   vkCmdEndRendering(cmd);
 }
 
@@ -1099,6 +1102,8 @@ bool SampleVulkan::create_graphics_pipeline()
   VkViewport viewport{
     .width = (float)m_swapchain_extent.width,
     .height = (float)m_swapchain_extent.height,
+    .minDepth = 0.0f,
+    .maxDepth = 1.0f,
   };
   VkRect2D scissor{
     .offset = {},
@@ -1126,7 +1131,9 @@ bool SampleVulkan::create_graphics_pipeline()
   };
 
   VkPipelineColorBlendAttachmentState color_blend_attachment_state{
-    
+    .blendEnable = VK_FALSE,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                  VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
   };
 
   VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{
