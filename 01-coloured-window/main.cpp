@@ -1,3 +1,6 @@
+// Released into the public domain.
+// Written by I-A-S for use in i-a-s.me vulkan series.
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
