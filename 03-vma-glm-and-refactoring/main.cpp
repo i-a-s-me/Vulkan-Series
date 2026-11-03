@@ -15,7 +15,7 @@ class SampleApp
 
   private:
   GLFWwindow *m_window{};
-  std::unique_ptr<SampleVulkan> m_vulkan{};
+  Box<SampleVulkan> m_vulkan{};
 };
 
 int main(int argc, char *argv[])
@@ -40,7 +40,7 @@ int SampleApp::launch(int argc, char *argv[])
     return -1;
   }
 
-  m_vulkan = std::make_unique<SampleVulkan>();
+  m_vulkan = Box<SampleVulkan>(new SampleVulkan());
   if (!m_vulkan->initialize([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
                                                 VkSurfaceKHR &out_surface) -> bool {
         if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
