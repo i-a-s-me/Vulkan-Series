@@ -7,6 +7,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(I_A_S_ME_VulkanSeries)
 
+include(FetchContent)
+
+FetchContent_Declare(glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.5.1
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(glfw)
+
 add_executable(App 
     main.cpp
     sample.cpp
