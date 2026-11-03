@@ -44,6 +44,8 @@ SampleVulkan::~SampleVulkan()
       vkDestroyImageView(m_device, view, nullptr);
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 
+    vmaDestroyAllocator(m_allocator);
+
     vkDestroyDevice(m_device, nullptr);
   }
 
@@ -81,6 +83,17 @@ bool SampleVulkan::initialize(
 
   if (!create_device_and_swapchain())
     return false;
+
+  VmaAllocatorCreateInfo vma_create_info{
+    .physicalDevice = m_physical_device,
+    .device = m_device,
+    .instance = m_instance,
+    .vulkanApiVersion = VK_API_VERSION_1_3,
+  };
+  if (vmaCreateAllocator(&vma_create_info, &m_allocator) != VK_SUCCESS) {
+    printf("Failed to create the VMA allocator\n");
+    return false;
+  }
 
   if (!create_frame_resources())
     return false;

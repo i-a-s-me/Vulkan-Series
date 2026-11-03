@@ -33,7 +33,8 @@ FetchContent_Declare(glm
 
 FetchContent_MakeAvailable(glfw VulkanMemoryAllocator glm)
 
-add_executable(App 
+add_executable(App
+    vma.cpp
     main.cpp
     sample.cpp
     pipeline.cpp

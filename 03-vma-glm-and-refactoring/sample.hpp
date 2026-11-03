@@ -160,4 +160,6 @@ private:
   FrameResourceSet m_frames[NUM_CONCURRENT_FRAMES];
 
   Box<Pipeline> m_graphics_pipeline{};
+
+  VmaAllocator m_allocator{};
 };
