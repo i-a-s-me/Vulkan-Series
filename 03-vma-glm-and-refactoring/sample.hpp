@@ -101,8 +101,7 @@ class SampleVulkan
     VkCommandBuffer cmd_buffer{};
   };
 
-  public:
-
+public:
   SampleVulkan() = default;
   SampleVulkan(const SampleVulkan &) = delete;
   SampleVulkan &operator=(const SampleVulkan &) = delete;
@@ -115,7 +114,7 @@ class SampleVulkan
 
   void resize(uint32_t fb_width, uint32_t fb_height);
 
-  private:
+private:
   bool create_instance();
   bool select_physical_device();
   bool create_device_and_swapchain();
@@ -131,7 +130,7 @@ class SampleVulkan
                                uint32_t base_mip_level = 0, uint32_t level_count = 1, uint32_t base_array_layer = 0,
                                uint32_t layer_count = 1);
 
-  private:
+private:
   VkInstance m_instance{};
   VkDebugUtilsMessengerEXT m_debug_messenger{};
 

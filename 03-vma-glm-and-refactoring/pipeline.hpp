@@ -11,6 +11,7 @@ public:
     static Result<Box<Pipeline>> create(VkDevice device, VkFormat color_attachment_format, 
         std::span<const uint32_t> vertex_shader_source, std::span<const uint32_t> fragment_shader_source);
 
+    Pipeline(const Pipeline&) = delete;
     ~Pipeline();
 
     void bind(VkCommandBuffer cmd);

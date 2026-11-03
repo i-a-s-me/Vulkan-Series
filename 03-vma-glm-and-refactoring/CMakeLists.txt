@@ -19,7 +19,19 @@ FetchContent_Declare(glfw
     GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(glfw)
+FetchContent_Declare(VulkanMemoryAllocator
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    GIT_TAG v3.5.0
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.3
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(glfw VulkanMemoryAllocator glm)
 
 add_executable(App 
     main.cpp
@@ -30,4 +42,6 @@ add_executable(App
 target_link_libraries(App PRIVATE 
     glfw
     vulkan
+    glm::glm
+    GPUOpen::VulkanMemoryAllocator
 )
