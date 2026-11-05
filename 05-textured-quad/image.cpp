@@ -105,6 +105,20 @@ bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageL
     dst_stage = VK_PIPELINE_STAGE_2_NONE;
     dst_access = VK_ACCESS_2_NONE;
   }
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)) {
+    src_stage = VK_PIPELINE_STAGE_2_NONE;
+    src_access = VK_ACCESS_2_NONE;
+
+    dst_stage = VK_PIPELINE_STAGE_2_COPY_BIT;
+    dst_access = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+  }
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+    src_stage = VK_PIPELINE_STAGE_2_COPY_BIT;
+    src_access = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+
+    dst_stage = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+    dst_access = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+  }
   else
   {
     printf("Unknown layout transition\n");

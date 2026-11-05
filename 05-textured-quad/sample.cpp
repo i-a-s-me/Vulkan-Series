@@ -320,7 +320,16 @@ bool SampleVulkan::initialize(
       ),
     m_texture_image);
 
-    
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
+    {
+      m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+      m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    });
+    if (!success) {
+      printf("Failed to copy pixels to the image\n");
+      return false;
+    }
   }
 
   return true;
