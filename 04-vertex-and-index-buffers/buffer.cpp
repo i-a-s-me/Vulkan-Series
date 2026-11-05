@@ -78,9 +78,9 @@ void Buffer::bind(VkCommandBuffer cmd)
   }
 }
 
-void Buffer::copy_from_cpu(const void* data, VkDeviceSize size)
+bool Buffer::copy_from_cpu(const void* data, VkDeviceSize size)
 {
   assert(m_usage == EUsage::STAGING);
 
-  vmaCopyMemoryToAllocation(m_allocator, data, m_allocation, 0, size);
+  return vmaCopyMemoryToAllocation(m_allocator, data, m_allocation, 0, size) == VK_SUCCESS;
 }

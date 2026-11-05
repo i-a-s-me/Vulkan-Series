@@ -201,9 +201,12 @@ bool SampleVulkan::initialize(
   );
 
   { // copy VERTICES to vertex buffer
-    m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES));
+    if(!m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES))) {
+      printf("Failed to copy VERTICES to staging buffer\n");
+      return false;
+    }
 
-    execute_single_shot_commands([&](VkCommandBuffer cmd)
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
     {
       VkBufferCopy copy_region{
         .srcOffset = 0,
@@ -222,12 +225,19 @@ bool SampleVulkan::initialize(
                           0, 1, &barrier, 0, nullptr, 0, nullptr);
 
     });
+    if(!success) {
+      printf("Failed to copy staging buffer to vertex buffer\n");
+      return false;
+    }
   }
 
   { // copy INDICES to index buffer
-    m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES));
+    if(!m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES))) {
+      printf("Failed to copy INDICES to staging buffer\n");
+      return false;
+    }
 
-    execute_single_shot_commands([&](VkCommandBuffer cmd)
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
     {
       VkBufferCopy copy_region{
         .srcOffset = 0,
@@ -245,6 +255,10 @@ bool SampleVulkan::initialize(
       vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                           0, 1, &barrier, 0, nullptr, 0, nullptr);
     });
+    if (!success) {
+      printf("Failed to copy staging buffer to index buffer\n");
+      return false;
+    }
   }
 
   return true;
@@ -416,28 +430,37 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdEndRendering(cmd);
 }
 
-void SampleVulkan::execute_single_shot_commands(std::function<void(VkCommandBuffer)> commands)
+bool SampleVulkan::execute_single_shot_commands(std::function<void(VkCommandBuffer)> commands)
 {
-  vkResetCommandBuffer(m_single_shot_command_buffer, 0);
+  if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
+    return false;
 
   VkCommandBufferBeginInfo begin_info{
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
   };
-  vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info);
+  if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
+    return false;
 
   commands(m_single_shot_command_buffer);
 
-  vkEndCommandBuffer(m_single_shot_command_buffer);
+  if (vkEndCommandBuffer(m_single_shot_command_buffer) != VK_SUCCESS)
+    return false;
 
   VkSubmitInfo submit_info{
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .commandBufferCount = 1,
     .pCommandBuffers = &m_single_shot_command_buffer,
   };
-  vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_single_shot_command_fence);
+  if (vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_single_shot_command_fence) != VK_SUCCESS)
+    return false;
 
-  vkWaitForFences(m_device, 1, &m_single_shot_command_fence, true, UINT64_MAX);
-  vkResetFences(m_device, 1, &m_single_shot_command_fence);
+  if (vkWaitForFences(m_device, 1, &m_single_shot_command_fence, true, UINT64_MAX) != VK_SUCCESS)
+    return false;
+
+  if (vkResetFences(m_device, 1, &m_single_shot_command_fence) != VK_SUCCESS)
+    return false;
+
+  return true;
 }
 
 bool SampleVulkan::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout,
