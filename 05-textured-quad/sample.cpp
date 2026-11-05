@@ -48,6 +48,37 @@ static const uint32_t INDICES[6] = {
   2, 3, 0
 };
 
+// Create checkerboard pattern pixels (violet and white)
+static std::vector<uint8_t> get_checkerboard_pattern_pixels(uint32_t width, uint32_t height, uint32_t checker_size = 4)
+{
+  std::vector<uint8_t> rgba_data(width * height * 4);
+
+  for (uint32_t y = 0; y < height; ++y)
+  {
+    for (uint32_t x = 0; x < width; ++x)
+    {
+      const bool is_violet = ((x / checker_size) % 2) == ((y / checker_size) % 2);
+      uint32_t index = (y * width + x) * 4;
+      if (is_violet)
+      {
+        rgba_data[index + 0] = 255;
+        rgba_data[index + 1] = 0;
+        rgba_data[index + 2] = 255;
+        rgba_data[index + 3] = 255;
+      }
+      else
+      {
+        rgba_data[index + 0] = 255;
+        rgba_data[index + 1] = 255;
+        rgba_data[index + 2] = 255;
+        rgba_data[index + 3] = 255;
+      }
+    }
+  }
+
+  return rgba_data;
+}
+
 SampleVulkan::~SampleVulkan()
 {
   if (m_device)
@@ -272,16 +303,25 @@ bool SampleVulkan::initialize(
     }
   }
 
-  CHECK_RESULT(
-    Image::create(
-      m_device, 
-      m_allocator,
-      VK_FORMAT_R32G32B32A32_SFLOAT,
-      {.width = 200, .height = 200},
-      VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader and 
-                                                                        // copy data from staging buffer into this image.
-    ),
-  m_texture_image);
+  {
+    const uint32_t w = 32;
+    const uint32_t h = 32;
+
+    const auto pixels = get_checkerboard_pattern_pixels(w, h);
+
+    CHECK_RESULT(
+      Image::create(
+        m_device, 
+        m_allocator,
+        VK_FORMAT_R32G32B32A32_SFLOAT,
+        {.width = w, .height = h},
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader and 
+                                                                          // copy data from staging buffer into this image.
+      ),
+    m_texture_image);
+
+    
+  }
 
   return true;
 }
