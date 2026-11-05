@@ -27,7 +27,7 @@ public:
 
     VkBuffer get_handle() const { return m_handle; }
 
-    void* get_mapped_ptr() const { assert(m_usage == EUsage::STAGING); return m_mapped_ptr; }
+    void copy_from_cpu(const void* data, VkDeviceSize size);
 
 private:
     Buffer(VmaAllocator allocator): m_allocator(allocator) {}

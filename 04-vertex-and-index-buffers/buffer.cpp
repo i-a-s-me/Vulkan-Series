@@ -29,7 +29,7 @@ Result<Box<Buffer>> Buffer::create(VmaAllocator allocator, VkDeviceSize size, EU
       _usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
       // allow writing to this buffer from CPU memory
-      _mem_flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+      _mem_flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
       break;
   }
 
@@ -81,4 +81,12 @@ void Buffer::bind(VkCommandBuffer cmd)
       assert(false); // we shouldn't call bind on a staging buffer
     break;
   }
+}
+
+void Buffer::copy_from_cpu(const void* data, VkDeviceSize size)
+{
+  assert(m_usage == EUsage::STAGING);
+  
+  vmaCopyMemoryToAllocation(m_allocator, data, m_allocation, 0, size);
+  vmaFlushAllocation(m_allocator, m_allocation, 0, size);
 }

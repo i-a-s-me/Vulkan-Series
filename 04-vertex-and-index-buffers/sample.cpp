@@ -201,7 +201,7 @@ bool SampleVulkan::initialize(
   );
 
   { // copy VERTICES to vertex buffer
-    memcpy(m_staging_buffer->get_mapped_ptr(), VERTICES, sizeof(VERTICES));
+    m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES));
 
     execute_single_shot_commands([&](VkCommandBuffer cmd)
     {
@@ -216,7 +216,7 @@ bool SampleVulkan::initialize(
   }
 
   { // copy INDICES to index buffer
-    memcpy(m_staging_buffer->get_mapped_ptr(), INDICES, sizeof(INDICES));
+    m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES));
 
     execute_single_shot_commands([&](VkCommandBuffer cmd)
     {
