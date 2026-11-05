@@ -140,12 +140,18 @@ bool SampleVulkan::initialize(
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
       .queueFamilyIndex = m_graphics_queue_family_index,
     };
-    vkCreateCommandPool(m_device, &pool_create_info, nullptr, &m_single_shot_command_pool);
+    if (vkCreateCommandPool(m_device, &pool_create_info, nullptr, &m_single_shot_command_pool) != VK_SUCCESS) {
+      printf("Failed to create the single shot command pool\n");
+      return false;
+    }
 
     VkFenceCreateInfo fence_create_info{
       .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     };
-    vkCreateFence(m_device, &fence_create_info, nullptr, &m_single_shot_command_fence);
+    if (vkCreateFence(m_device, &fence_create_info, nullptr, &m_single_shot_command_fence) != VK_SUCCESS) {
+      printf("Failed to create the single shot fence\n");
+      return false;
+    }
 
     VkCommandBufferAllocateInfo alloc_info{
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -153,7 +159,10 @@ bool SampleVulkan::initialize(
       .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
       .commandBufferCount = 1,
     };
-    vkAllocateCommandBuffers(m_device, &alloc_info, &m_single_shot_command_buffer);
+    if (vkAllocateCommandBuffers(m_device, &alloc_info, &m_single_shot_command_buffer) != VK_SUCCESS) {
+      printf("Failed to allocate the single shot command buffer\n");
+      return false;
+    }
   }
 
   CHECK_RESULT(
