@@ -21,7 +21,7 @@ Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkForm
     .tiling = VK_IMAGE_TILING_OPTIMAL, // we don't have any specific tiling we need so let vulkan pick the optimal one
     .usage = usage,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // we only need to use our images from a single queue family at a time
-    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    .initialLayout = image->m_layout,
   };
 
   VmaAllocationCreateInfo alloc_create_info{
@@ -56,4 +56,97 @@ Image::~Image()
 
   if (m_device && m_view_handle)
     vkDestroyImageView(m_device, m_view_handle, nullptr);
+}
+
+bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
+{
+  if (transition_image_layout(cmd, m_handle, m_layout, new_layout)) {
+    m_layout = new_layout;
+    return true;
+  }
+
+  return false;
+}
+
+bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout,
+                                           VkImageLayout new_layout, uint32_t base_mip_level, uint32_t level_count,
+                                           uint32_t base_array_layer, uint32_t layer_count)
+{
+  VkPipelineStageFlags2 src_stage{}, dst_stage{};
+  VkAccessFlags2 src_access{}, dst_access{};
+  VkImageAspectFlags aspect{VK_IMAGE_ASPECT_COLOR_BIT};
+
+#define _is_layout_pair(o, n) ((old_layout == o) && (new_layout == n))
+
+  if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+  {
+    src_stage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    src_access = VK_ACCESS_2_NONE;
+
+    dst_stage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dst_access = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+  }
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
+  {
+    // Wait for any depth writes from a previous use of this image (e.g. the previous frame)
+    src_stage = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    src_access = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    dst_stage = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    dst_access = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  }
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
+  {
+    src_stage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    src_access = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+
+    dst_stage = VK_PIPELINE_STAGE_2_NONE;
+    dst_access = VK_ACCESS_2_NONE;
+  }
+  else
+  {
+    printf("Unknown layout transition\n");
+    return false;
+  }
+
+#undef _is_layout_pair
+
+  VkImageMemoryBarrier2 barrier{
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+
+      .srcStageMask = src_stage,
+      .srcAccessMask = src_access,
+
+      .dstStageMask = dst_stage,
+      .dstAccessMask = dst_access,
+
+      .oldLayout = old_layout,
+      .newLayout = new_layout,
+
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+
+      .image = image,
+
+      .subresourceRange =
+          {
+              .aspectMask = aspect,
+              .baseMipLevel = base_mip_level,
+              .levelCount = level_count,
+              .baseArrayLayer = base_array_layer,
+              .layerCount = layer_count,
+          },
+  };
+
+  VkDependencyInfo dep_info{
+      .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+      .imageMemoryBarrierCount = 1,
+      .pImageMemoryBarriers = &barrier,
+  };
+
+  vkCmdPipelineBarrier2(cmd, &dep_info);
+
+  return true;
 }

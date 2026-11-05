@@ -109,10 +109,6 @@ private:
 
   bool recreate_swapchain();
 
-  bool transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
-                               uint32_t base_mip_level = 0, uint32_t level_count = 1, uint32_t base_array_layer = 0,
-                               uint32_t layer_count = 1);
-
 private:
   VkInstance m_instance{};
   VkDebugUtilsMessengerEXT m_debug_messenger{};
