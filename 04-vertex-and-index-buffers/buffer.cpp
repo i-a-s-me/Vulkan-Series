@@ -45,13 +45,8 @@ Result<Box<Buffer>> Buffer::create(VmaAllocator allocator, VkDeviceSize size, EU
     .usage = VMA_MEMORY_USAGE_AUTO, // when _mem_flags doesn't contain CPU access flags (like we set in above switch STAGING case), this picks fast GPU VRAM
   };
 
-  VmaAllocationInfo alloc_info{};
-  if (vmaCreateBuffer(allocator, &create_info, &alloc_create_info, &buffer->m_handle, &buffer->m_allocation, &alloc_info) != VK_SUCCESS) {
+  if (vmaCreateBuffer(allocator, &create_info, &alloc_create_info, &buffer->m_handle, &buffer->m_allocation, nullptr) != VK_SUCCESS) {
     return "Failed to create the buffer";
-  }
-
-  if (usage == EUsage::STAGING) {
-    buffer->m_mapped_ptr = alloc_info.pMappedData;
   }
 
   return buffer;
@@ -86,7 +81,6 @@ void Buffer::bind(VkCommandBuffer cmd)
 void Buffer::copy_from_cpu(const void* data, VkDeviceSize size)
 {
   assert(m_usage == EUsage::STAGING);
-  
+
   vmaCopyMemoryToAllocation(m_allocator, data, m_allocation, 0, size);
-  vmaFlushAllocation(m_allocator, m_allocation, 0, size);
 }

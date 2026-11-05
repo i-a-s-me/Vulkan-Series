@@ -39,5 +39,4 @@ private:
     VkBuffer m_handle{};
     VkDeviceSize m_size{};
     VmaAllocation m_allocation{};
-    void* m_mapped_ptr{};
 };
