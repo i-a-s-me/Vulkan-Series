@@ -17,22 +17,16 @@ Result<Box<Buffer>> Buffer::create(VmaAllocator allocator, VkDeviceSize size, EU
     case EUsage::VERTEX:
       // vertex buffer + transfer dst (for copying data in from staging buffer)
       _usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-      // create in fast to access GPU VRAM
-      _mem_flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
       break;
 
     case EUsage::INDEX:
       // index buffer + transfer dst (for copying data in from staging buffer)
       _usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-      // create in fast to access GPU VRAM
-      _mem_flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
       break;
 
     case EUsage::STAGING:
-      // allows transferring data in and out from this buffer (for copying)
-      _usage = VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_2_TRANSFER_DST_BIT;
+      // allows transferring data out from this buffer (for copying)
+      _usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
       // allow writing to this buffer from CPU memory
       _mem_flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -48,7 +42,7 @@ Result<Box<Buffer>> Buffer::create(VmaAllocator allocator, VkDeviceSize size, EU
 
   VmaAllocationCreateInfo alloc_create_info{
     .flags = _mem_flags,
-    .usage = VMA_MEMORY_USAGE_AUTO,
+    .usage = VMA_MEMORY_USAGE_AUTO, // when _mem_flags doesn't contain CPU access flags (like we set in above switch STAGING case), this picks fast GPU VRAM
   };
 
   VmaAllocationInfo alloc_info{};
