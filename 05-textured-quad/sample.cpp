@@ -248,7 +248,7 @@ bool SampleVulkan::initialize(
       return false;
     }
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
     {
       VkBufferCopy copy_region{
         .srcOffset = 0,
@@ -266,6 +266,7 @@ bool SampleVulkan::initialize(
       vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                           0, 1, &barrier, 0, nullptr, 0, nullptr);
 
+      return Ok{};
     });
     if(!success) {
       printf("Failed to copy staging buffer to vertex buffer\n");
@@ -279,7 +280,7 @@ bool SampleVulkan::initialize(
       return false;
     }
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
     {
       VkBufferCopy copy_region{
         .srcOffset = 0,
@@ -296,6 +297,8 @@ bool SampleVulkan::initialize(
       };
       vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                           0, 1, &barrier, 0, nullptr, 0, nullptr);
+
+      return Ok{};
     });
     if (!success) {
       printf("Failed to copy staging buffer to index buffer\n");
@@ -313,18 +316,22 @@ bool SampleVulkan::initialize(
       Image::create(
         m_device, 
         m_allocator,
-        VK_FORMAT_R32G32B32A32_SFLOAT,
+        VK_FORMAT_R8G8B8A8_SRGB,
         {.width = w, .height = h},
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader and 
                                                                           // copy data from staging buffer into this image.
       ),
     m_texture_image);
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd)
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
     {
       m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+
+
       m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+      return Ok{};
     });
     if (!success) {
       printf("Failed to copy pixels to the image\n");
@@ -501,7 +508,7 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdEndRendering(cmd);
 }
 
-bool SampleVulkan::execute_single_shot_commands(std::function<void(VkCommandBuffer)> commands)
+bool SampleVulkan::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
 {
   if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
     return false;
@@ -512,7 +519,11 @@ bool SampleVulkan::execute_single_shot_commands(std::function<void(VkCommandBuff
   if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
     return false;
 
-  commands(m_single_shot_command_buffer);
+  const auto result = commands(m_single_shot_command_buffer);
+  if (result.is_error()) {
+    printf("%s\n", result.get_error().c_str());
+    return false;
+  }
 
   if (vkEndCommandBuffer(m_single_shot_command_buffer) != VK_SUCCESS)
     return false;

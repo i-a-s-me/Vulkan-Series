@@ -105,7 +105,7 @@ private:
 
   void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
 
-  bool execute_single_shot_commands(std::function<void(VkCommandBuffer)> commands);
+  bool execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands);
 
   bool recreate_swapchain();
 
