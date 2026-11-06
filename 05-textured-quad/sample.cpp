@@ -9,16 +9,6 @@
 #include <utility>
 #include <algorithm>
 
-#define CHECK_RESULT(_result, _var)             \
-{                                               \
-  auto result = _result;                        \
-  if (result.is_error()) {                      \
-    printf("%s\n", result.get_error().c_str()); \
-    return false;                               \
-  }                                             \
-  _var = std::move(result).take_value();        \
-}
-
 template<typename ElementT, typename FuncT, typename... Args> std::vector<ElementT> vkEnumCall(FuncT f, Args... args)
 {
   uint32_t _count{};
@@ -328,6 +318,8 @@ bool SampleVulkan::initialize(
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
 
+      if (!m_texture_image->copy_from_cpu(cmd, pixels.data(), pixels.size()))
+        return "Failed to copy pixels to texture image";
 
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";

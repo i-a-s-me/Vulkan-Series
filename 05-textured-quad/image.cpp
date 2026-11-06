@@ -51,11 +51,13 @@ Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkForm
 
 Image::~Image()
 {
-  if (m_allocator && m_allocation && m_handle)
-    vmaDestroyImage(m_allocator, m_handle, m_allocation);
+  m_staging_buffer.reset();
 
   if (m_device && m_view_handle)
     vkDestroyImageView(m_device, m_view_handle, nullptr);
+
+  if (m_allocator && m_allocation && m_handle)
+    vmaDestroyImage(m_allocator, m_handle, m_allocation);
 }
 
 bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
@@ -66,6 +68,43 @@ bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
   }
 
   return false;
+}
+
+bool Image::copy_from_cpu(VkCommandBuffer cmd, const void* data, VkDeviceSize size)
+{
+  assert(m_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  if (!m_staging_buffer || (m_staging_buffer->get_size() < size)) {
+    m_staging_buffer.reset();
+
+    CHECK_RESULT(
+      Buffer::create(
+        m_allocator,
+        size,
+        Buffer::EUsage::STAGING
+      ),
+      m_staging_buffer
+    );
+  }
+
+  m_staging_buffer->copy_from_cpu(data, size);
+
+  VkBufferImageCopy region{
+    .bufferOffset = 0,
+    .bufferRowLength = m_extent.width,
+    .bufferImageHeight = m_extent.height,
+    .imageSubresource = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .mipLevel = 0,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    },
+    .imageOffset = {},
+    .imageExtent = VkExtent3D(m_extent.width, m_extent.height, 1),
+  };
+  vkCmdCopyBufferToImage(cmd, m_staging_buffer->get_handle(), m_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+  return true;
 }
 
 bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout,

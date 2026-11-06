@@ -19,6 +19,16 @@
 
 #include <glm/glm.hpp>
 
+#define CHECK_RESULT(_result, _var)             \
+{                                               \
+  auto result = _result;                        \
+  if (result.is_error()) {                      \
+    printf("%s\n", result.get_error().c_str()); \
+    return false;                               \
+  }                                             \
+  _var = std::move(result).take_value();        \
+}
+
 struct Ok {};
 
 // A very simple Result type to hold either

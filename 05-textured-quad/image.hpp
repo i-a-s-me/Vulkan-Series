@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "buffer.hpp"
 
 class Image
 {
@@ -20,6 +20,10 @@ public:
 
   bool transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout);
 
+  // make sure the image is in VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL layout before
+  // calling this function
+  bool copy_from_cpu(VkCommandBuffer cmd, const void* data, VkDeviceSize size);
+
 private:
   Image(VkDevice device, VmaAllocator allocator): m_device(device), m_allocator(allocator) {}
 
@@ -33,4 +37,6 @@ private:
   VkExtent2D m_extent{};
   VmaAllocation m_allocation{};
   VkImageLayout m_layout{VK_IMAGE_LAYOUT_UNDEFINED};
+
+  Box<Buffer> m_staging_buffer; // only create if copy_from_cpu is called
 };
