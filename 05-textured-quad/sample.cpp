@@ -24,13 +24,15 @@ struct Vertex
 {
   glm::vec3 pos;
   glm::vec3 colour;
+  glm::vec2 texcord;
+  float _align;
 };
 
 static const Vertex VERTICES[4] = {
-  {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)},
-  {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)},
-  {glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)},
-  {glm::vec3(-0.5f, 0.5f, 0.0f),  glm::vec3(1.0f, 0.0f, 1.0f)},
+  {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+  {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
+  {glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
+  {glm::vec3(-0.5f, 0.5f, 0.0f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 };
 
 static const uint32_t INDICES[6] = {
@@ -198,6 +200,7 @@ bool SampleVulkan::initialize(
       std::initializer_list<VkVertexInputAttributeDescription>{
         VkVertexInputAttributeDescription{.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, pos)},
         VkVertexInputAttributeDescription{.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, colour)},
+        VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcord)},
       },
       SHADER_SPV_VERT,
       SHADER_SPV_FRAG
