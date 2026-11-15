@@ -191,6 +191,16 @@ bool SampleVulkan::initialize(
   }
 
   CHECK_RESULT(
+    ShaderDataTable::create(
+      m_device,
+      std::initializer_list<ShaderDataTable::EntryDescription>{
+        {.name = "texture_sampler", .set = 0, .binding = 0, .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .count = 1, .stages = VK_SHADER_STAGE_FRAGMENT_BIT,},
+      }
+    ),
+    m_shader_data_table
+  );
+
+  CHECK_RESULT(
     Pipeline::create(
       m_device,
       m_swapchain_format.format,
@@ -202,6 +212,7 @@ bool SampleVulkan::initialize(
         VkVertexInputAttributeDescription{.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, colour)},
         VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcord)},
       },
+      m_shader_data_table.get(),
       SHADER_SPV_VERT,
       SHADER_SPV_FRAG
     ),

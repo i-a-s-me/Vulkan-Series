@@ -6,18 +6,10 @@
 Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachment_format,
         std::span<const VkVertexInputBindingDescription> input_bindings,
         std::span<const VkVertexInputAttributeDescription> input_attributes,
+        const ShaderDataTable* data_table,
         std::span<const uint32_t> vertex_shader_source, std::span<const uint32_t> fragment_shader_source)
 {
   Box<Pipeline> pipeline{new Pipeline(device)};
-
-  VkPipelineLayoutCreateInfo layout_create_info{
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    .setLayoutCount = 0,
-    .pushConstantRangeCount = 0,
-  };
-
-  if (vkCreatePipelineLayout(device, &layout_create_info, nullptr, &pipeline->m_layout) != VK_SUCCESS)
-    return "Failed to create the graphics pipeline layout";
 
   VkShaderModule shader_modules[2];
 
@@ -134,7 +126,7 @@ Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachmen
     .pColorBlendState = &color_blend_state_create_info,
     .pDynamicState = &dynamic_state_create_info,
 
-    .layout = pipeline->m_layout,
+    .layout = data_table->get_pipeline_layout(),
   };
 
   if (vkCreateGraphicsPipelines(device, nullptr, 1, &create_info, nullptr, &pipeline->m_handle) != VK_SUCCESS) {
@@ -162,5 +154,4 @@ Pipeline::~Pipeline()
     return;
 
   if (m_handle) vkDestroyPipeline(m_device, m_handle, nullptr);
-  if (m_layout) vkDestroyPipelineLayout(m_device, m_layout, nullptr);
 }

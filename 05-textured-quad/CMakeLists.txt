@@ -40,6 +40,7 @@ add_executable(App
     buffer.cpp
     sample.cpp
     pipeline.cpp
+    shader_data_table.cpp
 )
 
 target_link_libraries(App PRIVATE 

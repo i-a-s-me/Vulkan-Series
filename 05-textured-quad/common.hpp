@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <map>
 #include <span>
 #include <cstdio>
 #include <memory>

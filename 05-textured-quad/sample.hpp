@@ -162,4 +162,5 @@ private:
   VkCommandBuffer m_single_shot_command_buffer{};
 
   Box<Image> m_texture_image{};
+  Box<ShaderDataTable> m_shader_data_table{};
 };

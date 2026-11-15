@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "shader_data_table.hpp"
 
 class Pipeline
 {
@@ -11,6 +11,7 @@ public:
     static Result<Box<Pipeline>> create(VkDevice device, VkFormat color_attachment_format, 
         std::span<const VkVertexInputBindingDescription> input_bindings,
         std::span<const VkVertexInputAttributeDescription> input_attributes,
+        const ShaderDataTable* data_table,
         std::span<const uint32_t> vertex_shader_source, std::span<const uint32_t> fragment_shader_source);
 
     Pipeline(const Pipeline&) = delete;
@@ -25,5 +26,4 @@ private:
     VkDevice m_device{};
 
     VkPipeline m_handle{};
-    VkPipelineLayout m_layout{};
 };
