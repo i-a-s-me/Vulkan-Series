@@ -311,6 +311,23 @@ bool SampleVulkan::initialize(
   }
 
   {
+    VkSamplerCreateInfo create_info{
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+    };
+
+    if (vkCreateSampler(m_device, &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS) {
+      printf("Failed to create the texture sampler\n");
+      return false;
+    }
+  }
+
+  {
     const uint32_t w = 32;
     const uint32_t h = 32;
 
