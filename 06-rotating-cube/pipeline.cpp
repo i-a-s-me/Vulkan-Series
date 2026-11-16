@@ -3,7 +3,9 @@
 
 #include "pipeline.hpp"
 
-Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachment_format,
+Result<Box<Pipeline>> Pipeline::create(VkDevice device,
+        VkFormat color_attachment_format,
+        VkFormat depth_attachment_format,
         std::span<const VkVertexInputBindingDescription> input_bindings,
         std::span<const VkVertexInputAttributeDescription> input_attributes,
         const ShaderDataTable* data_table,
@@ -53,7 +55,7 @@ Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachmen
     .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
     .colorAttachmentCount = 1,
     .pColorAttachmentFormats = &color_attachment_format,
-    .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
+    .depthAttachmentFormat = depth_attachment_format,
     .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
   };
 
@@ -111,6 +113,15 @@ Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachmen
     .pDynamicStates = dynamic_states,
   };
 
+  VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+    .depthTestEnable = true,
+    .depthWriteEnable = true,
+    .depthCompareOp = VK_COMPARE_OP_LESS,
+    .minDepthBounds = 0.0f,
+    .maxDepthBounds = 1.0f,
+  };
+
   VkGraphicsPipelineCreateInfo create_info{
     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
     .pNext = &rendering_create_info,
@@ -123,6 +134,7 @@ Result<Box<Pipeline>> Pipeline::create(VkDevice device, VkFormat color_attachmen
     .pViewportState = &viewport_state_create_info,
     .pRasterizationState = &rs_create_info,
     .pMultisampleState = &multisample_state_create_info,
+    .pDepthStencilState = &depth_stencil_state_create_info,
     .pColorBlendState = &color_blend_state_create_info,
     .pDynamicState = &dynamic_state_create_info,
 

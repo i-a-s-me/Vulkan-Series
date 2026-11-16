@@ -8,7 +8,9 @@
 class Pipeline
 {
 public:
-    static Result<Box<Pipeline>> create(VkDevice device, VkFormat color_attachment_format, 
+    static Result<Box<Pipeline>> create(VkDevice device, 
+        VkFormat color_attachment_format,
+        VkFormat depth_attachment_format, 
         std::span<const VkVertexInputBindingDescription> input_bindings,
         std::span<const VkVertexInputAttributeDescription> input_attributes,
         const ShaderDataTable* data_table,
