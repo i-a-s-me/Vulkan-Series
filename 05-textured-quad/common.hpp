@@ -5,6 +5,7 @@
 
 #include <map>
 #include <span>
+#include <deque>
 #include <cstdio>
 #include <memory>
 #include <string>

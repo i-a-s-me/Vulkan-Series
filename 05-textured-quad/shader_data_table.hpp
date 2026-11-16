@@ -47,6 +47,6 @@ private:
     std::map<std::string, std::pair<uint32_t, uint32_t>> m_entry_map{};
 
     std::vector<VkWriteDescriptorSet> m_queued_writes{};
-    std::vector<VkDescriptorImageInfo*> m_queued_write_image_infos{};
-    std::vector<VkDescriptorBufferInfo*> m_queued_write_buffer_infos{};
+    std::deque<VkDescriptorImageInfo> m_queued_write_image_infos{};
+    std::deque<VkDescriptorBufferInfo> m_queued_write_buffer_infos{};
 };
