@@ -8,5 +8,5 @@ layout(set = 1, binding = 0) uniform sampler2D texture_sampler;
 layout(location = 0) out vec4 finalColor;
 
 void main() {
-    finalColor = texture(texture_sampler, in_texcoord) * vec4(in_color, 1.0);
+    finalColor = texture(texture_sampler, in_texcoord);
 }

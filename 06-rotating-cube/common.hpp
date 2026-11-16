@@ -20,6 +20,7 @@
 #include <vk_mem_alloc.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #define CHECK_RESULT(_result, _var)             \
 {                                               \
