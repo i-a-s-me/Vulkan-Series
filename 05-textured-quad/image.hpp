@@ -24,6 +24,10 @@ public:
   // calling this function
   bool copy_from_cpu(VkCommandBuffer cmd, const void* data, VkDeviceSize size);
 
+  VkImageView get_view() const { return m_view_handle; }
+  VkImageLayout get_layout() const { return m_layout; }
+  VkFormat get_format() const { return m_format; }
+
 private:
   Image(VkDevice device, VmaAllocator allocator): m_device(device), m_allocator(allocator) {}
 

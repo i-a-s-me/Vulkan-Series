@@ -94,3 +94,68 @@ ShaderDataTable::~ShaderDataTable()
 
     if (m_pipeline_layout) vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
 }
+
+void ShaderDataTable::write_image_entry(const std::string& name, const Image* image, VkSampler sampler, uint32_t index)
+{
+    const auto entry = m_entry_map.find(name);
+    if (entry == m_entry_map.end())
+        return;
+
+    m_queued_write_image_infos.push_back(new VkDescriptorImageInfo{
+      sampler,
+      image->get_view(),
+      image->get_layout(),  
+    });
+
+    m_queued_writes.push_back({
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = m_sets[entry->second.first],
+        .dstBinding = entry->second.second,
+        .dstArrayElement = index,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = m_queued_write_image_infos.back(),
+    });
+}
+
+void ShaderDataTable::write_buffer_entry(const std::string& name, const Buffer* buffer, VkDeviceSize offset, VkDeviceSize size, uint32_t index)
+{
+    const auto entry = m_entry_map.find(name);
+    if (entry == m_entry_map.end())
+        return;
+
+    m_queued_write_buffer_infos.push_back(new VkDescriptorBufferInfo{
+        buffer->get_handle(),
+        offset,
+        (size == 0) ? buffer->get_size() : size,
+    });
+
+    m_queued_writes.push_back({
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = m_sets[entry->second.first],
+        .dstBinding = entry->second.second,
+        .dstArrayElement = index,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // for now we assume all writes are uniform buffers
+        .pBufferInfo = m_queued_write_buffer_infos.back(),
+    });
+}
+
+void ShaderDataTable::flush_writes()
+{
+    vkUpdateDescriptorSets(m_device, m_queued_writes.size(), m_queued_writes.data(), 0, nullptr);
+
+    for (const auto& v: m_queued_write_image_infos)
+        delete v;
+    m_queued_write_image_infos.clear();
+
+    for (const auto& v: m_queued_write_buffer_infos)
+        delete v;
+    m_queued_write_buffer_infos.clear();
+}
+
+void ShaderDataTable::bind(VkCommandBuffer cmd)
+{
+    flush_writes();
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, m_sets.size(), m_sets.data(), 0, nullptr);
+}
