@@ -43,6 +43,7 @@ private:
     VkDescriptorPool m_pool{};
     VkPipelineLayout m_pipeline_layout{};
     std::vector<VkDescriptorSet> m_sets{};
+    std::vector<VkDescriptorSetLayout> m_set_layouts{};
     std::map<std::string, std::pair<uint32_t, uint32_t>> m_entry_map{};
 
     std::vector<VkWriteDescriptorSet> m_queued_writes{};

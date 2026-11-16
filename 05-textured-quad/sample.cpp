@@ -363,6 +363,9 @@ bool SampleVulkan::initialize(
     }
   }
 
+  m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler);
+  m_shader_data_table->flush_writes();
+
   return true;
 }
 
@@ -526,6 +529,8 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 
   m_vertex_buffer->bind(cmd);
   m_index_buffer->bind(cmd);
+
+  m_shader_data_table->bind(cmd);
 
   vkCmdDrawIndexed(cmd, sizeof(INDICES)/sizeof(INDICES[0]), 1, 0, 0, 0);
 

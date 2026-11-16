@@ -30,7 +30,7 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
       table->m_entry_map[entry.name] = {entry.set, entry.binding};
     }
 
-    std::vector<VkDescriptorSetLayout> set_layouts{set_count};
+    table->m_set_layouts.resize(set_count);
     for(uint32_t i = 0; i < set_count; i++) {
       VkDescriptorSetLayoutCreateInfo set_layout_create_info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -38,14 +38,14 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
         .pBindings = bindings[i].data(),
       };
 
-      if (vkCreateDescriptorSetLayout(device, &set_layout_create_info, nullptr, &set_layouts[i]) != VK_SUCCESS)
+      if (vkCreateDescriptorSetLayout(device, &set_layout_create_info, nullptr, &table->m_set_layouts[i]) != VK_SUCCESS)
         return "Failed to create the descriptor set layout";
     }
 
     VkPipelineLayoutCreateInfo layout_create_info{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      .setLayoutCount = (uint32_t)set_layouts.size(),
-      .pSetLayouts = set_layouts.data(),
+      .setLayoutCount = (uint32_t)table->m_set_layouts.size(),
+      .pSetLayouts = table->m_set_layouts.data(),
       .pushConstantRangeCount = 0, // we'll talk about push constants in another post
     };
 
@@ -71,16 +71,12 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
     VkDescriptorSetAllocateInfo alloc_info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = table->m_pool,
-        .descriptorSetCount = (uint32_t)set_layouts.size(),
-        .pSetLayouts = set_layouts.data(),
+        .descriptorSetCount = (uint32_t)table->m_set_layouts.size(),
+        .pSetLayouts = table->m_set_layouts.data(),
     };
 
     if (vkAllocateDescriptorSets(device, &alloc_info, table->m_sets.data()) != VK_SUCCESS)
       return "Failed to allocate descriptor sets";
-
-    for (size_t i = 0; i < set_layouts.size(); i++)
-      vkDestroyDescriptorSetLayout(device, set_layouts[i], nullptr);
-    set_layouts.clear();
 
     return table;
 }
@@ -89,6 +85,10 @@ ShaderDataTable::~ShaderDataTable()
 {
     if (!m_device)
         return;
+
+    for (size_t i = 0; i < m_set_layouts.size(); i++)
+      vkDestroyDescriptorSetLayout(m_device, m_set_layouts[i], nullptr);
+    m_set_layouts.clear();
 
     if (m_pool) vkDestroyDescriptorPool(m_device, m_pool, nullptr);
 
