@@ -4,6 +4,7 @@
 #include "sample.hpp"
 
 #include <set>
+#include <chrono>
 #include <stdio.h>
 #include <string.h>
 #include <utility>
@@ -539,6 +540,17 @@ bool SampleVulkan::render()
 
 void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 {
+  {
+    static constexpr float SPEED = glm::radians(90.0f);
+    static auto prev_time = std::chrono::steady_clock::now();
+    
+    const auto current_time = std::chrono::steady_clock::now();
+    const auto seconds = std::chrono::duration<float>(current_time - prev_time).count();
+
+    g_vertex_uniform_data.model = glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(0.0f, 0.0f, 1.0f));
+    m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
+  }
+
   VkRenderingAttachmentInfo color_attachment_info{
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
       .imageView = color_attachment,
