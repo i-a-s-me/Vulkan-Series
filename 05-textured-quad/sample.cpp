@@ -78,6 +78,10 @@ SampleVulkan::~SampleVulkan()
     vkDeviceWaitIdle(m_device);
 
     m_texture_image.reset();
+    
+    vkDestroySampler(m_device, m_texture_sampler, nullptr);
+
+    m_shader_data_table.reset();
 
     vkDestroyFence(m_device, m_single_shot_command_fence, nullptr);
 
