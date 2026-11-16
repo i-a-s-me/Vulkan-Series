@@ -317,7 +317,6 @@ bool SampleVulkan::initialize(
       .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
       .magFilter = VK_FILTER_NEAREST,
       .minFilter = VK_FILTER_NEAREST,
-      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
       .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
       .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
       .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -365,7 +364,10 @@ bool SampleVulkan::initialize(
     }
   }
 
-  m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler);
+  if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler)) {
+    printf("Failed to write texture image to shader data table\n");
+    return false;
+  }
   m_shader_data_table->flush_writes();
 
   return true;

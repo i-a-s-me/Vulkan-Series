@@ -26,8 +26,8 @@ public:
     ShaderDataTable(const ShaderDataTable&) = delete;
     ~ShaderDataTable();
 
-    void write_image_entry(const std::string& name, const Image* image, VkSampler sampler, uint32_t index = 0);
-    void write_buffer_entry(const std::string& name, const Buffer* buffer, VkDeviceSize offset = 0, VkDeviceSize size = 0, uint32_t index = 0);
+    bool write_image_entry(const std::string& name, const Image* image, VkSampler sampler, uint32_t index = 0);
+    bool write_buffer_entry(const std::string& name, const Buffer* buffer, VkDeviceSize offset = 0, VkDeviceSize size = 0, uint32_t index = 0);
     void flush_writes();
 
     void bind(VkCommandBuffer cmd);

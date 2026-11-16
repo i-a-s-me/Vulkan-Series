@@ -92,11 +92,11 @@ ShaderDataTable::~ShaderDataTable()
     if (m_pipeline_layout) vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
 }
 
-void ShaderDataTable::write_image_entry(const std::string& name, const Image* image, VkSampler sampler, uint32_t index)
+bool ShaderDataTable::write_image_entry(const std::string& name, const Image* image, VkSampler sampler, uint32_t index)
 {
     const auto entry = m_entry_map.find(name);
     if (entry == m_entry_map.end())
-        return;
+        return false;
 
     m_queued_write_image_infos.push_back(VkDescriptorImageInfo{
       sampler,
@@ -113,13 +113,15 @@ void ShaderDataTable::write_image_entry(const std::string& name, const Image* im
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .pImageInfo = &m_queued_write_image_infos.back(),
     });
+
+    return true;
 }
 
-void ShaderDataTable::write_buffer_entry(const std::string& name, const Buffer* buffer, VkDeviceSize offset, VkDeviceSize size, uint32_t index)
+bool ShaderDataTable::write_buffer_entry(const std::string& name, const Buffer* buffer, VkDeviceSize offset, VkDeviceSize size, uint32_t index)
 {
     const auto entry = m_entry_map.find(name);
     if (entry == m_entry_map.end())
-        return;
+        return false;
 
     m_queued_write_buffer_infos.push_back(VkDescriptorBufferInfo{
         buffer->get_handle(),
@@ -136,6 +138,8 @@ void ShaderDataTable::write_buffer_entry(const std::string& name, const Buffer* 
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // for now we assume all writes are uniform buffers
         .pBufferInfo = &m_queued_write_buffer_infos.back(),
     });
+
+    return true;
 }
 
 void ShaderDataTable::flush_writes()
