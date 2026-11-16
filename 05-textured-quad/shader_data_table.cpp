@@ -22,10 +22,7 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
         .stageFlags = entry.stages,
       });
 
-      if (descriptor_counts.contains(entry.type))
-          descriptor_counts[entry.type] += entry.count;
-      else
-          descriptor_counts[entry.type] = 1;
+      descriptor_counts[entry.type] += entry.count;
 
       table->m_entry_map[entry.name] = {entry.set, entry.binding};
     }
@@ -161,6 +158,5 @@ void ShaderDataTable::flush_writes()
 
 void ShaderDataTable::bind(VkCommandBuffer cmd)
 {
-    flush_writes();
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, m_sets.size(), m_sets.data(), 0, nullptr);
 }

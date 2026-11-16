@@ -24,8 +24,7 @@ struct Vertex
 {
   glm::vec3 pos;
   glm::vec3 colour;
-  glm::vec2 texcord;
-  float _align;
+  glm::vec2 texcoord;
 };
 
 static const Vertex VERTICES[4] = {
@@ -81,8 +80,6 @@ SampleVulkan::~SampleVulkan()
     
     vkDestroySampler(m_device, m_texture_sampler, nullptr);
 
-    m_shader_data_table.reset();
-
     vkDestroyFence(m_device, m_single_shot_command_fence, nullptr);
 
     vkDestroyCommandPool(m_device, m_single_shot_command_pool, nullptr);
@@ -92,6 +89,7 @@ SampleVulkan::~SampleVulkan()
     m_staging_buffer.reset();
 
     m_graphics_pipeline.reset();
+    m_shader_data_table.reset();
 
     for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
     {
@@ -214,7 +212,7 @@ bool SampleVulkan::initialize(
       std::initializer_list<VkVertexInputAttributeDescription>{
         VkVertexInputAttributeDescription{.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, pos)},
         VkVertexInputAttributeDescription{.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, colour)},
-        VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcord)},
+        VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcoord)},
       },
       m_shader_data_table.get(),
       SHADER_SPV_VERT,

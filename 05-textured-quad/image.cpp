@@ -87,7 +87,8 @@ bool Image::copy_from_cpu(VkCommandBuffer cmd, const void* data, VkDeviceSize si
     );
   }
 
-  m_staging_buffer->copy_from_cpu(data, size);
+  if (!m_staging_buffer->copy_from_cpu(data, size))
+    return false;
 
   VkBufferImageCopy region{
     .bufferOffset = 0,
