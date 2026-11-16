@@ -286,9 +286,9 @@ bool SampleVulkan::initialize(
   );
 
   {
-    g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, 0.0f));
+    g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.75f));
     g_vertex_uniform_data.view = glm::mat4(1.0f);
-    g_vertex_uniform_data.projection = glm::mat4(1.0f);
+    g_vertex_uniform_data.projection = glm::perspective(glm::half_pi<float>(), (float)m_swapchain_extent.width/(float)m_swapchain_extent.height, 0.1f, 1.0f);
 
     if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data))) {
       printf("Failed to copy data to uniform buffer\n");
