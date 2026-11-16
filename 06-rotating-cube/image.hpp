@@ -8,6 +8,8 @@
 class Image
 {
 public:
+  static bool is_depth_format(VkFormat format);
+
   static bool load_rgba_from_file(const std::string& path, std::vector<uint8_t>& pixels, VkExtent2D& extent);
 
   static bool transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,

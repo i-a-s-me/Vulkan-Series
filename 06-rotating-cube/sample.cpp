@@ -123,6 +123,8 @@ SampleVulkan::~SampleVulkan()
     m_staging_buffer.reset();
     m_vertex_uniform_buffer.reset();
 
+    m_depth_attachment.reset();
+
     for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
     {
       vkDestroyFence(m_device, m_frames[i].fen_in_flight, nullptr);
@@ -179,50 +181,8 @@ bool SampleVulkan::initialize(
   if (!create_device_and_swapchain())
     return false;
 
-  VmaAllocatorCreateInfo vma_create_info{
-    .physicalDevice = m_physical_device,
-    .device = m_device,
-    .instance = m_instance,
-    .vulkanApiVersion = VK_API_VERSION_1_3,
-  };
-  if (vmaCreateAllocator(&vma_create_info, &m_allocator) != VK_SUCCESS) {
-    printf("Failed to create the VMA allocator\n");
-    return false;
-  }
-
   if (!create_frame_resources())
     return false;
-
-  {
-    VkCommandPoolCreateInfo pool_create_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = m_graphics_queue_family_index,
-    };
-    if (vkCreateCommandPool(m_device, &pool_create_info, nullptr, &m_single_shot_command_pool) != VK_SUCCESS) {
-      printf("Failed to create the single shot command pool\n");
-      return false;
-    }
-
-    VkFenceCreateInfo fence_create_info{
-      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-    };
-    if (vkCreateFence(m_device, &fence_create_info, nullptr, &m_single_shot_command_fence) != VK_SUCCESS) {
-      printf("Failed to create the single shot fence\n");
-      return false;
-    }
-
-    VkCommandBufferAllocateInfo alloc_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = m_single_shot_command_pool,
-      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = 1,
-    };
-    if (vkAllocateCommandBuffers(m_device, &alloc_info, &m_single_shot_command_buffer) != VK_SUCCESS) {
-      printf("Failed to allocate the single shot command buffer\n");
-      return false;
-    }
-  }
 
   CHECK_RESULT(
     ShaderDataTable::create(
@@ -866,6 +826,48 @@ bool SampleVulkan::create_device_and_swapchain()
   vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
   vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
 
+  VmaAllocatorCreateInfo vma_create_info{
+    .physicalDevice = m_physical_device,
+    .device = m_device,
+    .instance = m_instance,
+    .vulkanApiVersion = VK_API_VERSION_1_3,
+  };
+  if (vmaCreateAllocator(&vma_create_info, &m_allocator) != VK_SUCCESS) {
+    printf("Failed to create the VMA allocator\n");
+    return false;
+  }
+
+  {
+    VkCommandPoolCreateInfo pool_create_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = m_graphics_queue_family_index,
+    };
+    if (vkCreateCommandPool(m_device, &pool_create_info, nullptr, &m_single_shot_command_pool) != VK_SUCCESS) {
+      printf("Failed to create the single shot command pool\n");
+      return false;
+    }
+
+    VkFenceCreateInfo fence_create_info{
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    if (vkCreateFence(m_device, &fence_create_info, nullptr, &m_single_shot_command_fence) != VK_SUCCESS) {
+      printf("Failed to create the single shot fence\n");
+      return false;
+    }
+
+    VkCommandBufferAllocateInfo alloc_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = m_single_shot_command_pool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = 1,
+    };
+    if (vkAllocateCommandBuffers(m_device, &alloc_info, &m_single_shot_command_buffer) != VK_SUCCESS) {
+      printf("Failed to allocate the single shot command buffer\n");
+      return false;
+    }
+  }
+
   const auto surface_formats =
       vkEnumCall<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, m_physical_device, m_surface);
   const auto surface_present_modes =
@@ -961,6 +963,7 @@ bool SampleVulkan::recreate_swapchain()
                                                  surface_caps.maxImageExtent.height);
   m_swapchain_extent = m_pending_swapchain_extent;
 
+  m_depth_attachment.reset();
   for (const auto &view : m_swapchain_image_views)
     vkDestroyImageView(m_device, view, nullptr);
   if (m_swapchain)
@@ -1052,6 +1055,26 @@ bool SampleVulkan::recreate_swapchain()
 
     m_swapchain_image_views.push_back(view);
   }
+
+  CHECK_RESULT(
+    Image::create(
+      m_device,
+      m_allocator,
+      VK_FORMAT_D32_SFLOAT,
+      m_swapchain_extent,
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+    ),
+    m_depth_attachment
+  );
+  if (!execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
+    {
+      if (!m_depth_attachment->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
+        return "Failed to transition depth image layout";
+    
+      return Ok();
+    })
+  )
+    return false;
 
   m_swapchain_is_out_of_date = false;
 

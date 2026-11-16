@@ -39,7 +39,7 @@ Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkForm
     .viewType = VK_IMAGE_VIEW_TYPE_2D,
     .format = image->m_format,
     .subresourceRange = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .aspectMask = is_depth_format(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT,
       .baseMipLevel = 0,
       .levelCount = 1,
       .baseArrayLayer = 0,
@@ -224,4 +224,20 @@ bool Image::load_rgba_from_file(const std::string& path, std::vector<uint8_t>& p
     stbi_image_free(pixel_data);
 
     return true;
+}
+
+bool Image::is_depth_format(VkFormat format)
+{
+  switch(format)
+  {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+      return true;
+
+    default:
+      return false;
+  }
 }
