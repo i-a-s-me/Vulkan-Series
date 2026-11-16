@@ -290,8 +290,6 @@ bool SampleVulkan::initialize(
   {
     g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     g_vertex_uniform_data.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    g_vertex_uniform_data.projection = glm::perspective(glm::half_pi<float>(), (float)m_swapchain_extent.width/(float)m_swapchain_extent.height, 0.1f, 1.0f);
-    g_vertex_uniform_data.projection[1][1] *= -1.0f;
 
     if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data))) {
       printf("Failed to copy data to uniform buffer\n");
@@ -543,10 +541,10 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 {
   {
     static constexpr float SPEED = glm::radians(90.0f);
-    static auto prev_time = std::chrono::steady_clock::now();
+    static auto start_time = std::chrono::steady_clock::now();
     
     const auto current_time = std::chrono::steady_clock::now();
-    const auto seconds = std::chrono::duration<float>(current_time - prev_time).count();
+    const auto seconds = std::chrono::duration<float>(current_time - start_time).count();
 
     g_vertex_uniform_data.model = 
       glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f))
@@ -1125,6 +1123,9 @@ bool SampleVulkan::recreate_swapchain()
     })
   )
     return false;
+
+  g_vertex_uniform_data.projection = glm::perspective(glm::half_pi<float>(), (float)m_swapchain_extent.width/(float)m_swapchain_extent.height, 0.1f, 1.0f);
+  g_vertex_uniform_data.projection[1][1] *= -1.0f;
 
   m_swapchain_is_out_of_date = false;
 

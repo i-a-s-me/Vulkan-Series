@@ -131,7 +131,6 @@ bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageL
   }
   else if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
   {
-    // Wait for any depth writes from a previous use of this image (e.g. the previous frame)
     src_stage = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
     src_access = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
