@@ -36,16 +36,24 @@ struct VertexUniformData
   glm::mat4 projection;
 } g_vertex_uniform_data;
 
-static const Vertex VERTICES[4] = {
-  {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f, 0.5f, 0.0f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+static const Vertex VERTICES[8] = {
+  {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+  {glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
+  {glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
+  {glm::vec3(-0.5f,  0.5f, -0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+
+  {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+  {glm::vec3( 0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
+  {glm::vec3( 0.5f,  0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
+  {glm::vec3(-0.5f,  0.5f, 0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 };
 
-static const uint32_t INDICES[6] = {
+static const uint32_t INDICES[12] = {
   0, 1, 2,
-  2, 3, 0
+  2, 3, 0,
+
+  4, 5, 6,
+  6, 7, 4,
 };
 
 // Create checkerboard pattern pixels (violet and white)
@@ -547,7 +555,9 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
     const auto current_time = std::chrono::steady_clock::now();
     const auto seconds = std::chrono::duration<float>(current_time - prev_time).count();
 
-    g_vertex_uniform_data.model = glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(0.0f, 0.0f, 1.0f));
+    g_vertex_uniform_data.model = 
+      glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f))
+      * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
     m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
   }
 
