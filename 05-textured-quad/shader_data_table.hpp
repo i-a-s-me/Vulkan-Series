@@ -25,7 +25,6 @@ public:
     ~ShaderDataTable();
 
     VkPipelineLayout get_pipeline_layout() const { return m_pipeline_layout; }
-    std::span<const VkDescriptorSetLayout> get_set_layouts() const { return m_set_layouts; }
 
 protected:
     ShaderDataTable(VkDevice device): m_device(device) {}
@@ -33,8 +32,8 @@ protected:
 private:
     VkDevice m_device{};
 
+    VkDescriptorPool m_pool{};
     VkPipelineLayout m_pipeline_layout{};
     std::vector<VkDescriptorSet> m_sets{};
-    std::vector<VkDescriptorSetLayout> m_set_layouts{};
     std::map<std::string, std::pair<uint32_t, uint32_t>> m_entry_map{};
 };
