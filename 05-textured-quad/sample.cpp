@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <utility>
+#include <fstream>
 #include <algorithm>
 
 template<typename ElementT, typename FuncT, typename... Args> std::vector<ElementT> vkEnumCall(FuncT f, Args... args)
@@ -68,6 +69,20 @@ static std::vector<uint8_t> get_checkerboard_pattern_pixels(uint32_t width, uint
   }
 
   return rgba_data;
+}
+
+static Result<std::vector<uint32_t>> load_shader_from_file(const std::string& path)
+{
+  std::ifstream f(path, std::ios::in | std::ios::binary | std::ios::ate);
+  if (!f.is_open())
+    return "Failed to open shader file \""+ path + "\".";
+
+  std::vector<uint32_t> data;
+  data.resize(f.tellg() >> 2);
+  f.seekg(SEEK_SET);
+  f.read((char*)data.data(), data.size() << 2);
+
+  return std::move(data);
 }
 
 SampleVulkan::~SampleVulkan()
@@ -202,6 +217,10 @@ bool SampleVulkan::initialize(
     m_shader_data_table
   );
 
+  std::vector<uint32_t> vertex_shader_data, fragment_shader_data{};
+  CHECK_RESULT(load_shader_from_file("resources/default.vert.spv"), vertex_shader_data);
+  CHECK_RESULT(load_shader_from_file("resources/default.frag.spv"), fragment_shader_data);
+
   CHECK_RESULT(
     Pipeline::create(
       m_device,
@@ -215,8 +234,8 @@ bool SampleVulkan::initialize(
         VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcoord)},
       },
       m_shader_data_table.get(),
-      SHADER_SPV_VERT,
-      SHADER_SPV_FRAG
+      vertex_shader_data,
+      fragment_shader_data
     ),
     m_graphics_pipeline
   );
