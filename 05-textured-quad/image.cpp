@@ -3,6 +3,9 @@
 
 #include "image.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.hpp"
+
 Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkFormat format, VkExtent2D extent, VkImageUsageFlags usage)
 {
   Box<Image> image(new Image(device, allocator));
@@ -203,4 +206,22 @@ bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageL
   vkCmdPipelineBarrier2(cmd, &dep_info);
 
   return true;
+}
+
+bool Image::load_rgba_from_file(const std::string& path, std::vector<uint8_t>& pixels, VkExtent2D& extent)
+{
+    int w, h, n;
+    const auto pixel_data = stbi_load(path.c_str(), &w, &h, &n, STBI_rgb_alpha);
+    if (!pixel_data)
+        return false;
+
+    extent.width = (uint32_t)w;
+    extent.height = (uint32_t)h;
+
+    pixels.resize(w * h * 4);
+    memcpy(pixels.data(), pixel_data, pixels.size());
+
+    stbi_image_free(pixel_data);
+
+    return true;
 }

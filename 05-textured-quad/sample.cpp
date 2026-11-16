@@ -315,8 +315,8 @@ bool SampleVulkan::initialize(
   {
     VkSamplerCreateInfo create_info{
       .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      .magFilter = VK_FILTER_NEAREST,
-      .minFilter = VK_FILTER_NEAREST,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
       .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
       .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
       .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -329,17 +329,20 @@ bool SampleVulkan::initialize(
   }
 
   {
-    const uint32_t w = 32;
-    const uint32_t h = 32;
+    std::vector<uint8_t> pixels{};
+    VkExtent2D extent{};
 
-    const auto pixels = get_checkerboard_pattern_pixels(w, h);
+    if (!Image::load_rgba_from_file("resources/Ground037_1K-PNG_Color.png", pixels, extent)) {
+      printf("Failed to load texture data from the disk\n");
+      return false;
+    }
 
     CHECK_RESULT(
       Image::create(
         m_device, 
         m_allocator,
         VK_FORMAT_R8G8B8A8_SRGB,
-        {.width = w, .height = h},
+        extent,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader and 
                                                                           // copy data from staging buffer into this image.
       ),

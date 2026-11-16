@@ -8,6 +8,8 @@
 class Image
 {
 public:
+  static bool load_rgba_from_file(const std::string& path, std::vector<uint8_t>& pixels, VkExtent2D& extent);
+
   static bool transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
         uint32_t base_mip_level = 0, uint32_t level_count = 1, uint32_t base_array_layer = 0,
         uint32_t layer_count = 1);
