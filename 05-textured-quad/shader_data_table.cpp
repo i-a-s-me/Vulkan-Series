@@ -143,6 +143,9 @@ void ShaderDataTable::write_buffer_entry(const std::string& name, const Buffer* 
 
 void ShaderDataTable::flush_writes()
 {
+    if (m_queued_writes.empty())
+        return;
+
     vkUpdateDescriptorSets(m_device, m_queued_writes.size(), m_queued_writes.data(), 0, nullptr);
 
     for (const auto& v: m_queued_write_image_infos)
@@ -152,6 +155,8 @@ void ShaderDataTable::flush_writes()
     for (const auto& v: m_queued_write_buffer_infos)
         delete v;
     m_queued_write_buffer_infos.clear();
+
+    m_queued_writes.clear();
 }
 
 void ShaderDataTable::bind(VkCommandBuffer cmd)
