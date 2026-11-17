@@ -126,9 +126,7 @@ Renderer::~Renderer()
 
     vkDestroySampler(m_device, m_texture_sampler, nullptr);
 
-    vkDestroyFence(m_device, m_single_shot_command_fence, nullptr);
 
-    vkDestroyCommandPool(m_device, m_single_shot_command_pool, nullptr);
 
     m_graphics_pipeline.reset();
     m_shader_data_table.reset();
@@ -140,41 +138,10 @@ Renderer::~Renderer()
 
     m_depth_attachment.reset();
 
-    for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
-    {
-      vkDestroyFence(m_device, m_frames[i].fen_in_flight, nullptr);
-      vkDestroySemaphore(m_device, m_frames[i].sm_image_available, nullptr);
-    }
+    
 
-    for (size_t i = 0; i < m_render_done_semaphores.size(); i++)
-      vkDestroySemaphore(m_device, m_render_done_semaphores[i], nullptr);
-    m_render_done_semaphores.clear();
-
-    vkDestroyCommandPool(m_device, m_frame_resource_command_pool, nullptr);
-
-    for (const auto &view : m_swapchain_image_views)
-      vkDestroyImageView(m_device, view, nullptr);
-    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-
-    vmaDestroyAllocator(m_allocator);
-
-    vkDestroyDevice(m_device, nullptr);
   }
 
-  if (m_instance)
-  {
-    if (m_surface)
-      vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-
-    {
-      const auto debug_messenger_destroy_func =
-          (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT");
-      if (debug_messenger_destroy_func && m_debug_messenger)
-        debug_messenger_destroy_func(m_instance, m_debug_messenger, nullptr);
-    }
-
-    vkDestroyInstance(m_instance, nullptr);
-  }
 }
 
 bool Renderer::initialize(
@@ -588,63 +555,6 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdEndRendering(cmd);
 }
 
-bool Renderer::create_device_and_swapchain()
-{
-
-  
-
-  return recreate_swapchain();
-}
-
-bool Renderer::create_frame_resources()
-{
-  VkCommandPoolCreateInfo commmand_pool_create_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = m_graphics_queue_family_index,
-  };
-  if (vkCreateCommandPool(m_device, &commmand_pool_create_info, nullptr, &m_frame_resource_command_pool) != VK_SUCCESS)
-  {
-    printf("Failed to create command pool\n");
-    return false;
-  }
-
-  VkCommandBufferAllocateInfo command_buffer_alloc_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = m_frame_resource_command_pool,
-      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = 1,
-  };
-  for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
-  {
-    if (vkAllocateCommandBuffers(m_device, &command_buffer_alloc_info, &m_frames[i].cmd_buffer) != VK_SUCCESS)
-    {
-      printf("Failed to allocate frame command buffer\n");
-      return false;
-    }
-
-    VkSemaphoreCreateInfo semaphore_create_info{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-    };
-    if (vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].sm_image_available) != VK_SUCCESS)
-    {
-      printf("Failed to create a semaphore\n");
-      return false;
-    }
-
-    VkFenceCreateInfo fence_create_info{
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
-    };
-    if (vkCreateFence(m_device, &fence_create_info, nullptr, &m_frames[i].fen_in_flight) != VK_SUCCESS)
-    {
-      printf("Failed to create a fence\n");
-      return false;
-    }
-  }
-
-  return true;
-}
 
   CHECK_RESULT(Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_D32_SFLOAT, m_extent,
                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),

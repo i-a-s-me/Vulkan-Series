@@ -23,6 +23,7 @@ Result<Box<Swapchain>> Swapchain::create(const VulkanCore *core, VkExtent2D init
   swapchain->m_pending_extent = initial_extent;
 
   PROPAGATE_RESULT_ERROR(swapchain->recreate());
+  PROPAGATE_RESULT_ERROR(swapchain->create_frame_resources());
 
   return swapchain;
 }
@@ -31,6 +32,22 @@ Swapchain::~Swapchain()
 {
   if (!m_core || !m_core->get_device())
     return;
+
+  for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
+  {
+    vkDestroyFence(m_core->get_device(), m_frames[i].fen_in_flight, nullptr);
+    vkDestroySemaphore(m_core->get_device(), m_frames[i].sm_image_available, nullptr);
+  }
+
+  for (size_t i = 0; i < m_render_done_semaphores.size(); i++)
+    vkDestroySemaphore(m_core->get_device(), m_render_done_semaphores[i], nullptr);
+  m_render_done_semaphores.clear();
+
+  vkDestroyCommandPool(m_core->get_device(), m_frame_resource_command_pool, nullptr);
+
+  for (const auto &view : m_image_views)
+    vkDestroyImageView(m_core->get_device(), view, nullptr);
+  vkDestroySwapchainKHR(m_core->get_device(), m_swapchain, nullptr);
 }
 
 void Swapchain::resize(uint32_t fb_width, uint32_t fb_height)
@@ -157,6 +174,47 @@ Result<> Swapchain::recreate()
   }
 
   m_is_out_of_date = false;
+
+  return Ok();
+}
+
+Result<> Swapchain::create_frame_resources()
+{
+  VkCommandPoolCreateInfo commmand_pool_create_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = m_core->get_queue_family_index_graphics(),
+  };
+  if (vkCreateCommandPool(m_core->get_device(), &commmand_pool_create_info, nullptr, &m_frame_resource_command_pool) !=
+      VK_SUCCESS)
+    return "Failed to create command pool";
+
+  VkCommandBufferAllocateInfo command_buffer_alloc_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = m_frame_resource_command_pool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = 1,
+  };
+  for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
+  {
+    if (vkAllocateCommandBuffers(m_core->get_device(), &command_buffer_alloc_info, &m_frames[i].cmd_buffer) !=
+        VK_SUCCESS)
+      return "Failed to allocate frame command buffer";
+
+    VkSemaphoreCreateInfo semaphore_create_info{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
+    if (vkCreateSemaphore(m_core->get_device(), &semaphore_create_info, nullptr, &m_frames[i].sm_image_available) !=
+        VK_SUCCESS)
+      return "Failed to create a semaphore";
+
+    VkFenceCreateInfo fence_create_info{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+    if (vkCreateFence(m_core->get_device(), &fence_create_info, nullptr, &m_frames[i].fen_in_flight) != VK_SUCCESS)
+      return "Failed to create a fence";
+  }
 
   return Ok();
 }

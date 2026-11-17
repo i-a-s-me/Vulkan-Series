@@ -33,6 +33,7 @@ class Swapchain
   }
 
   Result<> recreate();
+  Result<> create_frame_resources();
 
   private:
   const VulkanCore *const m_core;

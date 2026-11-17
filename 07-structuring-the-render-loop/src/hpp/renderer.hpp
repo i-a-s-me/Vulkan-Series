@@ -29,10 +29,6 @@ class Renderer
 
   void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
 
-  bool execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands);
-
-  bool recreate_swapchain();
-
   private:
   Box<Image> m_depth_attachment{};
   
