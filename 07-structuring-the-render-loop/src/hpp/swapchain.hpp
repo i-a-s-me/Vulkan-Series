@@ -27,7 +27,8 @@ class Swapchain
   void resize(uint32_t fb_width, uint32_t fb_height);
   void request_recreation();
 
-  Result<> update();
+  Result<VkCommandBuffer> begin_frame();
+  Result<> end_frame();
 
   private:
   Swapchain(const VulkanCore *core) : m_core(core)
@@ -54,6 +55,7 @@ class Swapchain
   Box<Image> m_depth_image{};
 
   uint32_t m_current_frame_index{};
+  uint32_t m_current_image_index{};
   VkCommandPool m_frame_resource_command_pool{};
   FrameResourceSet m_frames[NUM_CONCURRENT_FRAMES];
 

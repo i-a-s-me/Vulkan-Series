@@ -63,19 +63,18 @@ void Swapchain::request_recreation()
   m_is_out_of_date = true;
 }
 
-Result<> Swapchain::update()
+Result<VkCommandBuffer> Swapchain::begin_frame()
 {
   const auto &current_frame = m_frames[m_current_frame_index];
 
   vkWaitForFences(m_core->get_device(), 1, &current_frame.fen_in_flight, VK_TRUE, UINT64_MAX);
 
-  uint32_t image_index{};
   switch (vkAcquireNextImageKHR(m_core->get_device(), m_swapchain, UINT64_MAX, current_frame.sm_image_available,
-                                VK_NULL_HANDLE, &image_index))
+                                VK_NULL_HANDLE, &m_current_image_index))
   {
   case VK_ERROR_OUT_OF_DATE_KHR:
     PROPAGATE_RESULT_ERROR(recreate());
-    return Ok();
+    return (VkCommandBuffer)VK_NULL_HANDLE;
 
   case VK_SUCCESS:
   case VK_SUBOPTIMAL_KHR:
@@ -92,13 +91,13 @@ Result<> Swapchain::update()
   if (vkBeginCommandBuffer(current_frame.cmd_buffer, &cmd_begin_info) != VK_SUCCESS)
     return "Failed to start recording command buffer";
 
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
-                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[m_current_image_index],
+                                      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
     return "Failed to transition swapchain image";
 
   VkRenderingAttachmentInfo color_attachment_info{
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = m_image_views[image_index],
+      .imageView = m_image_views[m_current_image_index],
       .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
       .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
       .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -159,11 +158,16 @@ Result<> Swapchain::update()
   };
   vkCmdSetScissor(current_frame.cmd_buffer, 0, 1, &scissor);
 
-  // draw_frame(, m_image_views[image_index]);
+  return (VkCommandBuffer)current_frame.cmd_buffer;
+}
+
+Result<> Swapchain::end_frame()
+{
+  const auto &current_frame = m_frames[m_current_frame_index];
 
   vkCmdEndRendering(current_frame.cmd_buffer);
 
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index],
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[m_current_image_index],
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
     return "Failed to transition swapchain image";
 
@@ -179,7 +183,7 @@ Result<> Swapchain::update()
       .commandBufferCount = 1,
       .pCommandBuffers = &current_frame.cmd_buffer,
       .signalSemaphoreCount = 1,
-      .pSignalSemaphores = &m_render_done_semaphores[image_index],
+      .pSignalSemaphores = &m_render_done_semaphores[m_current_image_index],
   };
 
   vkResetFences(m_core->get_device(), 1, &current_frame.fen_in_flight);
@@ -189,10 +193,10 @@ Result<> Swapchain::update()
   VkPresentInfoKHR present_info{
       .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
       .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &m_render_done_semaphores[image_index],
+      .pWaitSemaphores = &m_render_done_semaphores[m_current_image_index],
       .swapchainCount = 1,
       .pSwapchains = &m_swapchain,
-      .pImageIndices = &image_index,
+      .pImageIndices = &m_current_image_index,
   };
 
   switch (vkQueuePresentKHR(m_core->get_queue_present(), &present_info))
