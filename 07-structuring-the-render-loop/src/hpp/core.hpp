@@ -23,6 +23,8 @@ private:
     Result<> create_instance();
     Result<> select_physical_device();
     Result<> create_device();
+    Result<> create_allocator();
+    Result<> initialize_single_shot_commands();
 
 private:
     VkInstance m_instance{};
@@ -41,4 +43,6 @@ private:
     VkFence m_single_shot_command_fence{};
     VkCommandPool m_single_shot_command_pool{};
     VkCommandBuffer m_single_shot_command_buffer{};
+
+    VkExtent2D m_pending_swapchain_extent{1, 1};
 };

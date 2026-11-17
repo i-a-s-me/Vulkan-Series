@@ -47,7 +47,6 @@ private:
   VkSurfaceFormatKHR m_swapchain_format{};
   VkPresentModeKHR m_swapchain_present_mode{};
   VkExtent2D m_swapchain_extent{1, 1};
-  VkExtent2D m_pending_swapchain_extent{1, 1};
   bool m_swapchain_is_out_of_date{};
   VkSurfaceTransformFlagBitsKHR m_swapchain_pre_transform{};
   Box<Image> m_depth_attachment{};
