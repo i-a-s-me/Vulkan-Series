@@ -53,7 +53,7 @@ VulkanCore::~VulkanCore()
   }
 }
 
-Result<> VulkanCore::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
+Result<> VulkanCore::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands) const
 {
   if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
     return "Failed to reset single shot command buffer";

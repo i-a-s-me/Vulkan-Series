@@ -1,7 +1,7 @@
 // Released into the public domain.
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
-#include <common.hpp>
+#include <image.hpp>
 
 class VulkanCore;
 
@@ -51,6 +51,7 @@ class Swapchain
   VkSwapchainKHR m_swapchain{};
   std::vector<VkImage> m_images{};
   std::vector<VkImageView> m_image_views{};
+  Box<Image> m_depth_image{};
 
   uint32_t m_current_frame_index{};
   VkCommandPool m_frame_resource_command_pool{};

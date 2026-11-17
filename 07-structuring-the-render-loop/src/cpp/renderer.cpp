@@ -376,16 +376,7 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 }
 
 
-  CHECK_RESULT(Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_D32_SFLOAT, m_extent,
-                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
-               m_depth_attachment);
-  if (!execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
-        if (!m_depth_attachment->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
-          return "Failed to transition depth image layout";
-
-        return Ok();
-      }))
-    return false;
+  
 
       g_vertex_uniform_data.projection = glm::perspective(
       glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);

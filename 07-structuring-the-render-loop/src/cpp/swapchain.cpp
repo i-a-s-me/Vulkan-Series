@@ -2,7 +2,6 @@
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
 #include <core.hpp>
-#include <image.hpp>
 #include <swapchain.hpp>
 
 Result<Box<Swapchain>> Swapchain::create(const VulkanCore *core, VkExtent2D initial_extent)
@@ -33,6 +32,8 @@ Swapchain::~Swapchain()
 {
   if (!m_core || !m_core->get_device())
     return;
+
+  m_depth_image.reset();
 
   for (uint32_t i = 0; i < NUM_CONCURRENT_FRAMES; i++)
   {
@@ -115,7 +116,7 @@ Result<> Swapchain::update()
 
   VkRenderingAttachmentInfo depth_attachment_info{
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = m_depth_attachment->get_view(),
+      .imageView = m_depth_image->get_view(),
       .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
       .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
       .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -244,6 +245,7 @@ Result<> Swapchain::recreate()
       std::clamp(m_pending_extent.height, surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
   m_extent = m_pending_extent;
 
+  m_depth_image.reset();
   for (const auto &view : m_image_views)
     vkDestroyImageView(m_core->get_device(), view, nullptr);
   if (m_swapchain)
@@ -326,6 +328,22 @@ Result<> Swapchain::recreate()
       return "Failed to create a swapchain image view";
 
     m_image_views.push_back(view);
+  }
+
+  {
+    auto result = Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_D32_SFLOAT, m_extent,
+                                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    if (result.is_error())
+      return result.get_error();
+
+    m_depth_image = std::move(result).take_value();
+
+    PROPAGATE_RESULT_ERROR(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+      if (!m_depth_image->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
+        return "Failed to transition depth image layout";
+
+      return Ok();
+    }));
   }
 
   m_is_out_of_date = false;

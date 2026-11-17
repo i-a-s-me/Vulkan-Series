@@ -30,7 +30,6 @@ class Renderer
   void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
 
   private:
-  Box<Image> m_depth_attachment{};
   
 
   Box<Pipeline> m_graphics_pipeline{};

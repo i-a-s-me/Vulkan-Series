@@ -19,7 +19,7 @@ class VulkanCore
 
   ~VulkanCore();
 
-  Result<> execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands);
+  Result<> execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands) const;
 
   public:
   VkDevice get_device() const
