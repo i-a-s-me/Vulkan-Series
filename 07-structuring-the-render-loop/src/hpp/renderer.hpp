@@ -9,14 +9,7 @@
 
 class Renderer
 {
-  static constexpr uint32_t NUM_CONCURRENT_FRAMES = 3;
-
-  struct FrameResourceSet
-  {
-    VkFence fen_in_flight{};
-    VkSemaphore sm_image_available{};
-    VkCommandBuffer cmd_buffer{};
-  };
+  
 
   public:
   Renderer() = default;
@@ -41,22 +34,8 @@ class Renderer
   bool recreate_swapchain();
 
   private:
-  uint32_t m_swapchain_image_count{};
-  std::vector<VkSemaphore> m_render_done_semaphores;
-  VkSurfaceFormatKHR m_swapchain_format{};
-  VkPresentModeKHR m_swapchain_present_mode{};
-  VkExtent2D m_swapchain_extent{1, 1};
-  bool m_swapchain_is_out_of_date{};
-  VkSurfaceTransformFlagBitsKHR m_swapchain_pre_transform{};
   Box<Image> m_depth_attachment{};
-
-  VkSwapchainKHR m_swapchain{};
-  std::vector<VkImage> m_swapchain_images{};
-  std::vector<VkImageView> m_swapchain_image_views{};
-
-  uint32_t m_current_frame_index{};
-  VkCommandPool m_frame_resource_command_pool{};
-  FrameResourceSet m_frames[NUM_CONCURRENT_FRAMES];
+  
 
   Box<Pipeline> m_graphics_pipeline{};
 

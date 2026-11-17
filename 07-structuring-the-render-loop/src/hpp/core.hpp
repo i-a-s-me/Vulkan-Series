@@ -11,12 +11,16 @@ class VulkanCore
 
   public:
   static Result<Box<VulkanCore>> create(
-      std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
+      std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
+      uint32_t &initial_surface_width, uint32_t &initial_surface_height);
 
   VulkanCore(const VulkanCore &) = delete;
   VulkanCore &operator=(const VulkanCore &) = delete;
 
   ~VulkanCore();
+
+  VkDevice get_device() const { return m_device; }
+  VmaAllocator get_allocator() const { return m_allocator; }
 
   private:
   VulkanCore() = default;
@@ -44,6 +48,4 @@ class VulkanCore
   VkFence m_single_shot_command_fence{};
   VkCommandPool m_single_shot_command_pool{};
   VkCommandBuffer m_single_shot_command_buffer{};
-
-  VkExtent2D m_pending_swapchain_extent{1, 1};
 };

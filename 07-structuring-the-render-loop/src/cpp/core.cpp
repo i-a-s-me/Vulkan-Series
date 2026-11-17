@@ -15,14 +15,14 @@ template<typename ElementT, typename FuncT, typename... Args> std::vector<Elemen
 }
 
 Result<Box<VulkanCore>> VulkanCore::create(
-    std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
+    std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
+    uint32_t &initial_surface_width, uint32_t &initial_surface_height)
 {
   Box<VulkanCore> core(new VulkanCore());
 
   PROPAGATE_RESULT_ERROR(core->create_instance());
 
-  if (!surface_creation_callback(core->m_instance, core->m_pending_swapchain_extent.width,
-                                 core->m_pending_swapchain_extent.height, core->m_surface))
+  if (!surface_creation_callback(core->m_instance, initial_surface_width, initial_surface_height, core->m_surface))
     return "Failed to create Vulkan surface";
 
   PROPAGATE_RESULT_ERROR(core->select_physical_device());
