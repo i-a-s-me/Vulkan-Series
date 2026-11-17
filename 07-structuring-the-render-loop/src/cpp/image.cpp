@@ -6,7 +6,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.hpp>
 
-Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkFormat format, VkExtent2D extent, VkImageUsageFlags usage)
+Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkFormat format, VkExtent2D extent,
+                                 VkImageUsageFlags usage)
 {
   Box<Image> image(new Image(device, allocator));
 
@@ -14,37 +15,39 @@ Result<Box<Image>> Image::create(VkDevice device, VmaAllocator allocator, VkForm
   image->m_extent = extent;
 
   VkImageCreateInfo create_info{
-    .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-    .imageType = VK_IMAGE_TYPE_2D, // for now we'll only need 2D images
-    .format = format,
-    .extent = VkExtent3D(extent.width, extent.height, 1),
-    .mipLevels = 1, // we won't be bothering with mip mapping for now
-    .arrayLayers = 1,
-    .samples = VK_SAMPLE_COUNT_1_BIT, // we won't be bothering with multisampling for now either
-    .tiling = VK_IMAGE_TILING_OPTIMAL, // we don't have any specific tiling we need so let vulkan pick the optimal one
-    .usage = usage,
-    .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // we only need to use our images from a single queue family at a time
-    .initialLayout = image->m_layout,
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .imageType = VK_IMAGE_TYPE_2D, // for now we'll only need 2D images
+      .format = format,
+      .extent = VkExtent3D(extent.width, extent.height, 1),
+      .mipLevels = 1, // we won't be bothering with mip mapping for now
+      .arrayLayers = 1,
+      .samples = VK_SAMPLE_COUNT_1_BIT,  // we won't be bothering with multisampling for now either
+      .tiling = VK_IMAGE_TILING_OPTIMAL, // we don't have any specific tiling we need so let vulkan pick the optimal one
+      .usage = usage,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // we only need to use our images from a single queue family at a time
+      .initialLayout = image->m_layout,
   };
 
   VmaAllocationCreateInfo alloc_create_info{
-    .usage = VMA_MEMORY_USAGE_AUTO,
+      .usage = VMA_MEMORY_USAGE_AUTO,
   };
-  if (vmaCreateImage(allocator, &create_info, &alloc_create_info, &image->m_handle, &image->m_allocation, nullptr) != VK_SUCCESS)
+  if (vmaCreateImage(allocator, &create_info, &alloc_create_info, &image->m_handle, &image->m_allocation, nullptr) !=
+      VK_SUCCESS)
     return "Failed to create the image";
 
   VkImageViewCreateInfo view_create_info{
-    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-    .image = image->m_handle,
-    .viewType = VK_IMAGE_VIEW_TYPE_2D,
-    .format = image->m_format,
-    .subresourceRange = {
-      .aspectMask = is_depth_format(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    },
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .image = image->m_handle,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = image->m_format,
+      .subresourceRange =
+          {
+              .aspectMask = is_depth_format(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT,
+              .baseMipLevel = 0,
+              .levelCount = 1,
+              .baseArrayLayer = 0,
+              .layerCount = 1,
+          },
   };
   if (vkCreateImageView(device, &view_create_info, nullptr, &image->m_view_handle) != VK_SUCCESS)
     return "Failed to create the image view";
@@ -65,7 +68,8 @@ Image::~Image()
 
 bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
 {
-  if (transition_image_layout(cmd, m_handle, m_layout, new_layout)) {
+  if (transition_image_layout(cmd, m_handle, m_layout, new_layout))
+  {
     m_layout = new_layout;
     return true;
   }
@@ -73,47 +77,43 @@ bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
   return false;
 }
 
-bool Image::copy_from_cpu(VkCommandBuffer cmd, const void* data, VkDeviceSize size)
+bool Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize size)
 {
   assert(m_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-  if (!m_staging_buffer || (m_staging_buffer->get_size() < size)) {
+  if (!m_staging_buffer || (m_staging_buffer->get_size() < size))
+  {
     m_staging_buffer.reset();
 
-    CHECK_RESULT(
-      Buffer::create(
-        m_allocator,
-        size,
-        Buffer::EUsage::STAGING
-      ),
-      m_staging_buffer
-    );
+    CHECK_RESULT(Buffer::create(m_allocator, size, Buffer::EUsage::STAGING), m_staging_buffer);
   }
 
   if (!m_staging_buffer->copy_from_cpu(data, size))
     return false;
 
   VkBufferImageCopy region{
-    .bufferOffset = 0,
-    .bufferRowLength = m_extent.width,
-    .bufferImageHeight = m_extent.height,
-    .imageSubresource = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .mipLevel = 0,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    },
-    .imageOffset = {},
-    .imageExtent = VkExtent3D(m_extent.width, m_extent.height, 1),
+      .bufferOffset = 0,
+      .bufferRowLength = m_extent.width,
+      .bufferImageHeight = m_extent.height,
+      .imageSubresource =
+          {
+              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+              .mipLevel = 0,
+              .baseArrayLayer = 0,
+              .layerCount = 1,
+          },
+      .imageOffset = {},
+      .imageExtent = VkExtent3D(m_extent.width, m_extent.height, 1),
   };
-  vkCmdCopyBufferToImage(cmd, m_staging_buffer->get_handle(), m_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+  vkCmdCopyBufferToImage(cmd, m_staging_buffer->get_handle(), m_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+                         &region);
 
   return true;
 }
 
 bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout,
-                                           VkImageLayout new_layout, uint32_t base_mip_level, uint32_t level_count,
-                                           uint32_t base_array_layer, uint32_t layer_count)
+                                    VkImageLayout new_layout, uint32_t base_mip_level, uint32_t level_count,
+                                    uint32_t base_array_layer, uint32_t layer_count)
 {
   VkPipelineStageFlags2 src_stage{}, dst_stage{};
   VkAccessFlags2 src_access{}, dst_access{};
@@ -147,14 +147,16 @@ bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageL
     dst_stage = VK_PIPELINE_STAGE_2_NONE;
     dst_access = VK_ACCESS_2_NONE;
   }
-  else if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)) {
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
+  {
     src_stage = VK_PIPELINE_STAGE_2_NONE;
     src_access = VK_ACCESS_2_NONE;
 
     dst_stage = VK_PIPELINE_STAGE_2_COPY_BIT;
     dst_access = VK_ACCESS_2_TRANSFER_WRITE_BIT;
   }
-  else if (_is_layout_pair(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+  else if (_is_layout_pair(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
+  {
     src_stage = VK_PIPELINE_STAGE_2_COPY_BIT;
     src_access = VK_ACCESS_2_TRANSFER_WRITE_BIT;
 
@@ -207,36 +209,36 @@ bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageL
   return true;
 }
 
-bool Image::load_rgba_from_file(const std::string& path, std::vector<uint8_t>& pixels, VkExtent2D& extent)
+bool Image::load_rgba_from_file(const std::string &path, std::vector<uint8_t> &pixels, VkExtent2D &extent)
 {
-    int w, h, n;
-    const auto pixel_data = stbi_load(path.c_str(), &w, &h, &n, STBI_rgb_alpha);
-    if (!pixel_data)
-        return false;
+  int w, h, n;
+  const auto pixel_data = stbi_load(path.c_str(), &w, &h, &n, STBI_rgb_alpha);
+  if (!pixel_data)
+    return false;
 
-    extent.width = (uint32_t)w;
-    extent.height = (uint32_t)h;
+  extent.width = (uint32_t) w;
+  extent.height = (uint32_t) h;
 
-    pixels.resize(w * h * 4);
-    memcpy(pixels.data(), pixel_data, pixels.size());
+  pixels.resize(w * h * 4);
+  memcpy(pixels.data(), pixel_data, pixels.size());
 
-    stbi_image_free(pixel_data);
+  stbi_image_free(pixel_data);
 
-    return true;
+  return true;
 }
 
 bool Image::is_depth_format(VkFormat format)
 {
-  switch(format)
+  switch (format)
   {
-    case VK_FORMAT_D16_UNORM:
-    case VK_FORMAT_D32_SFLOAT:
-    case VK_FORMAT_D16_UNORM_S8_UINT:
-    case VK_FORMAT_D24_UNORM_S8_UINT:
-    case VK_FORMAT_D32_SFLOAT_S8_UINT:
-      return true;
+  case VK_FORMAT_D16_UNORM:
+  case VK_FORMAT_D32_SFLOAT:
+  case VK_FORMAT_D16_UNORM_S8_UINT:
+  case VK_FORMAT_D24_UNORM_S8_UINT:
+  case VK_FORMAT_D32_SFLOAT_S8_UINT:
+    return true;
 
-    default:
-      return false;
+  default:
+    return false;
   }
 }

@@ -7,37 +7,45 @@
 
 class Buffer
 {
-public:
-    enum class EUsage
-    {
-        VERTEX,
-        INDEX,
-        UNIFORM,
-        STAGING,
-    };
+  public:
+  enum class EUsage
+  {
+    VERTEX,
+    INDEX,
+    UNIFORM,
+    STAGING,
+  };
 
-public:
-    static Result<Box<Buffer>> create(VmaAllocator allocator, VkDeviceSize size, EUsage usage);
+  public:
+  static Result<Box<Buffer>> create(VmaAllocator allocator, VkDeviceSize size, EUsage usage);
 
-    Buffer(const Buffer&) = delete;
-    ~Buffer();
+  Buffer(const Buffer &) = delete;
+  ~Buffer();
 
-    void bind(VkCommandBuffer cmd);
+  void bind(VkCommandBuffer cmd);
 
-    VkDeviceSize get_size() const { return m_size; }
+  VkDeviceSize get_size() const
+  {
+    return m_size;
+  }
 
-    VkBuffer get_handle() const { return m_handle; }
+  VkBuffer get_handle() const
+  {
+    return m_handle;
+  }
 
-    bool copy_from_cpu(const void* data, VkDeviceSize size);
+  bool copy_from_cpu(const void *data, VkDeviceSize size);
 
-private:
-    Buffer(VmaAllocator allocator): m_allocator(allocator) {}
+  private:
+  Buffer(VmaAllocator allocator) : m_allocator(allocator)
+  {
+  }
 
-private:
-    EUsage m_usage{};
-    VmaAllocator m_allocator{};
-    
-    VkBuffer m_handle{};
-    VkDeviceSize m_size{};
-    VmaAllocation m_allocation{};
+  private:
+  EUsage m_usage{};
+  VmaAllocator m_allocator{};
+
+  VkBuffer m_handle{};
+  VkDeviceSize m_size{};
+  VmaAllocation m_allocation{};
 };

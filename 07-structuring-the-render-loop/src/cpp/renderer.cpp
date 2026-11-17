@@ -26,55 +26,49 @@ struct VertexUniformData
 } g_vertex_uniform_data;
 
 static const Vertex VERTICES[24] = {
-  {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f,  0.5f, -0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 
-  {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3( 0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3( 0.5f,  0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f,  0.5f, 0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 
-  {glm::vec3( -0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3( -0.5f,  0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3(-0.5f,  0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f, -0.5f, 0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 
-  {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3(0.5f,  0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(0.5f, -0.5f, 0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 
-  {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f, -0.5f,  0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 
-  {glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-  {glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f) , glm::vec2(1.0f, 0.0f)},
-  {glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3(0.0f, 0.0f, 1.0f)  , glm::vec2(1.0f, 1.0f)},
-  {glm::vec3(-0.5f,  0.5f,  0.5f),  glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
 };
 
 static const uint32_t INDICES[36] = {
-  0, 1, 2,
-  2, 3, 0,
+    0,  1,  2,  2,  3,  0,
 
-  4, 5, 6,
-  6, 7, 4,
+    4,  5,  6,  6,  7,  4,
 
-  8, 9, 10,
-  10, 11, 8,
+    8,  9,  10, 10, 11, 8,
 
-  12, 13, 14,
-  14, 15, 12,
+    12, 13, 14, 14, 15, 12,
 
-  16, 17, 18,
-  18, 19, 16,
+    16, 17, 18, 18, 19, 16,
 
-  20, 21, 22,
-  22, 23, 20,
+    20, 21, 22, 22, 23, 20,
 };
 
 // Create checkerboard pattern pixels (violet and white)
@@ -108,16 +102,16 @@ static std::vector<uint8_t> get_checkerboard_pattern_pixels(uint32_t width, uint
   return rgba_data;
 }
 
-static Result<std::vector<uint32_t>> load_shader_from_file(const std::string& path)
+static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &path)
 {
   std::ifstream f(path, std::ios::in | std::ios::binary | std::ios::ate);
   if (!f.is_open())
-    return "Failed to open shader file \""+ path + "\".";
+    return "Failed to open shader file \"" + path + "\".";
 
   std::vector<uint32_t> data;
   data.resize(f.tellg() >> 2);
   f.seekg(SEEK_SET);
-  f.read((char*)data.data(), data.size() << 2);
+  f.read((char *) data.data(), data.size() << 2);
 
   return std::move(data);
 }
@@ -129,7 +123,7 @@ Renderer::~Renderer()
     vkDeviceWaitIdle(m_device);
 
     m_texture_image.reset();
-    
+
     vkDestroySampler(m_device, m_texture_sampler, nullptr);
 
     vkDestroyFence(m_device, m_single_shot_command_fence, nullptr);
@@ -187,154 +181,142 @@ bool Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
 
-
-
   if (!create_device_and_swapchain())
     return false;
 
   if (!create_frame_resources())
     return false;
 
-  CHECK_RESULT(
-    ShaderDataTable::create(
-      m_device,
-      std::initializer_list<ShaderDataTable::EntryDescription>{
-        {.name = "vertex_uniform_data", .set = 0, .binding = 0, .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .count = 1, .stages = VK_SHADER_STAGE_VERTEX_BIT,},
-        {.name = "texture_sampler", .set = 1, .binding = 0, .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .count = 1, .stages = VK_SHADER_STAGE_FRAGMENT_BIT,},
-      }
-    ),
-    m_shader_data_table
-  );
+  CHECK_RESULT(ShaderDataTable::create(m_device,
+                                       std::initializer_list<ShaderDataTable::EntryDescription>{
+                                           {
+                                               .name = "vertex_uniform_data",
+                                               .set = 0,
+                                               .binding = 0,
+                                               .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                               .count = 1,
+                                               .stages = VK_SHADER_STAGE_VERTEX_BIT,
+                                           },
+                                           {
+                                               .name = "texture_sampler",
+                                               .set = 1,
+                                               .binding = 0,
+                                               .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                               .count = 1,
+                                               .stages = VK_SHADER_STAGE_FRAGMENT_BIT,
+                                           },
+                                       }),
+               m_shader_data_table);
 
   std::vector<uint32_t> vertex_shader_data, fragment_shader_data{};
   CHECK_RESULT(load_shader_from_file("resources/default.vert.spv"), vertex_shader_data);
   CHECK_RESULT(load_shader_from_file("resources/default.frag.spv"), fragment_shader_data);
 
   CHECK_RESULT(
-    Pipeline::create(
-      m_device,
-      m_swapchain_format.format,
-      m_depth_attachment->get_format(),
-      std::initializer_list<VkVertexInputBindingDescription>{
-        {.binding = 0, .stride = sizeof(Vertex), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX},
-      },
-      std::initializer_list<VkVertexInputAttributeDescription>{
-        VkVertexInputAttributeDescription{.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, pos)},
-        VkVertexInputAttributeDescription{.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, colour)},
-        VkVertexInputAttributeDescription{.location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcoord)},
-      },
-      m_shader_data_table.get(),
-      vertex_shader_data,
-      fragment_shader_data
-    ),
-    m_graphics_pipeline
-  );
+      Pipeline::create(
+          m_device, m_swapchain_format.format, m_depth_attachment->get_format(),
+          std::initializer_list<VkVertexInputBindingDescription>{
+              {.binding = 0, .stride = sizeof(Vertex), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX},
+          },
+          std::initializer_list<VkVertexInputAttributeDescription>{
+              VkVertexInputAttributeDescription{
+                  .location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, pos)},
+              VkVertexInputAttributeDescription{.location = 1,
+                                                .binding = 0,
+                                                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                                .offset = offsetof(Vertex, colour)},
+              VkVertexInputAttributeDescription{
+                  .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcoord)},
+          },
+          m_shader_data_table.get(), vertex_shader_data, fragment_shader_data),
+      m_graphics_pipeline);
 
   CHECK_RESULT(
-    Buffer::create(
-      m_allocator,
-      std::max(sizeof(VERTICES), sizeof(INDICES)), // maximum size we'll need for our staging operations 
-      Buffer::EUsage::STAGING
-    ),
-    m_staging_buffer
-  );
+      Buffer::create(m_allocator,
+                     std::max(sizeof(VERTICES), sizeof(INDICES)), // maximum size we'll need for our staging operations
+                     Buffer::EUsage::STAGING),
+      m_staging_buffer);
 
-  CHECK_RESULT(
-    Buffer::create(
-      m_allocator,
-      sizeof(VERTICES), 
-      Buffer::EUsage::VERTEX
-    ),
-    m_vertex_buffer
-  );
+  CHECK_RESULT(Buffer::create(m_allocator, sizeof(VERTICES), Buffer::EUsage::VERTEX), m_vertex_buffer);
 
-  CHECK_RESULT(
-    Buffer::create(
-      m_allocator,
-      sizeof(INDICES), 
-      Buffer::EUsage::INDEX
-    ),
-    m_index_buffer
-  );
+  CHECK_RESULT(Buffer::create(m_allocator, sizeof(INDICES), Buffer::EUsage::INDEX), m_index_buffer);
 
-  CHECK_RESULT(
-    Buffer::create(
-      m_allocator,
-      sizeof(VertexUniformData),
-      Buffer::EUsage::UNIFORM
-    ),
-    m_vertex_uniform_buffer
-  );
+  CHECK_RESULT(Buffer::create(m_allocator, sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
+               m_vertex_uniform_buffer);
 
   {
     g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    g_vertex_uniform_data.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    g_vertex_uniform_data.view =
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data))) {
+    if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
+    {
       printf("Failed to copy data to uniform buffer\n");
       return false;
     }
   }
 
   { // copy VERTICES to vertex buffer
-    if(!m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES))) {
+    if (!m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES)))
+    {
       printf("Failed to copy VERTICES to staging buffer\n");
       return false;
     }
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
-    {
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
-        .srcOffset = 0,
-        .dstOffset = 0,
-        .size = m_vertex_buffer->get_size(),
+          .srcOffset = 0,
+          .dstOffset = 0,
+          .size = m_vertex_buffer->get_size(),
       };
 
       vkCmdCopyBuffer(cmd, m_staging_buffer->get_handle(), m_vertex_buffer->get_handle(), 1, &copy_region);
 
       VkMemoryBarrier barrier{
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+          .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+          .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+          .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
       };
-      vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                          0, 1, &barrier, 0, nullptr, 0, nullptr);
+      vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 1, &barrier, 0,
+                           nullptr, 0, nullptr);
 
       return Ok{};
     });
-    if(!success) {
+    if (!success)
+    {
       printf("Failed to copy staging buffer to vertex buffer\n");
       return false;
     }
   }
 
   { // copy INDICES to index buffer
-    if(!m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES))) {
+    if (!m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES)))
+    {
       printf("Failed to copy INDICES to staging buffer\n");
       return false;
     }
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
-    {
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
-        .srcOffset = 0,
-        .dstOffset = 0,
-        .size = m_index_buffer->get_size(),
+          .srcOffset = 0,
+          .dstOffset = 0,
+          .size = m_index_buffer->get_size(),
       };
-      
+
       vkCmdCopyBuffer(cmd, m_staging_buffer->get_handle(), m_index_buffer->get_handle(), 1, &copy_region);
 
       VkMemoryBarrier barrier{
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_INDEX_READ_BIT,
+          .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+          .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+          .dstAccessMask = VK_ACCESS_INDEX_READ_BIT,
       };
-      vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                          0, 1, &barrier, 0, nullptr, 0, nullptr);
+      vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 1, &barrier, 0,
+                           nullptr, 0, nullptr);
 
       return Ok{};
     });
-    if (!success) {
+    if (!success)
+    {
       printf("Failed to copy staging buffer to index buffer\n");
       return false;
     }
@@ -342,15 +324,16 @@ bool Renderer::initialize(
 
   {
     VkSamplerCreateInfo create_info{
-      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      .magFilter = VK_FILTER_LINEAR,
-      .minFilter = VK_FILTER_LINEAR,
-      .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-      .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-      .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
     };
 
-    if (vkCreateSampler(m_device, &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS) {
+    if (vkCreateSampler(m_device, &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS)
+    {
       printf("Failed to create the texture sampler\n");
       return false;
     }
@@ -360,24 +343,20 @@ bool Renderer::initialize(
     std::vector<uint8_t> pixels{};
     VkExtent2D extent{};
 
-    if (!Image::load_rgba_from_file("resources/Ground037_1K-PNG_Color.png", pixels, extent)) {
+    if (!Image::load_rgba_from_file("resources/Ground037_1K-PNG_Color.png", pixels, extent))
+    {
       printf("Failed to load texture data from the disk\n");
       return false;
     }
 
-    CHECK_RESULT(
-      Image::create(
-        m_device, 
-        m_allocator,
-        VK_FORMAT_R8G8B8A8_SRGB,
-        extent,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader and 
-                                                                          // copy data from staging buffer into this image.
-      ),
-    m_texture_image);
+    CHECK_RESULT(Image::create(m_device, m_allocator, VK_FORMAT_R8G8B8A8_SRGB, extent,
+                               VK_IMAGE_USAGE_SAMPLED_BIT |
+                                   VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader
+                                                                   // and copy data from staging buffer into this image.
+                               ),
+                 m_texture_image);
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
-    {
+    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
 
@@ -389,17 +368,20 @@ bool Renderer::initialize(
 
       return Ok{};
     });
-    if (!success) {
+    if (!success)
+    {
       printf("Failed to copy pixels to the image\n");
       return false;
     }
   }
 
-  if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", m_vertex_uniform_buffer.get())) {
+  if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", m_vertex_uniform_buffer.get()))
+  {
     printf("Failed to write uniform buffer to shader data table\n");
     return false;
   }
-  if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler)) {
+  if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler))
+  {
     printf("Failed to write texture image to shader data table\n");
     return false;
   }
@@ -442,8 +424,8 @@ bool Renderer::render()
     return false;
   }
 
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_swapchain_images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_swapchain_images[image_index],
+                                      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
   {
     printf("Failed to transition swapchain image\n");
     return false;
@@ -452,7 +434,7 @@ bool Renderer::render()
   draw_frame(current_frame.cmd_buffer, m_swapchain_image_views[image_index]);
 
   if (!Image::transition_image_layout(current_frame.cmd_buffer, m_swapchain_images[image_index],
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
   {
     printf("Failed to transition swapchain image\n");
     return false;
@@ -521,13 +503,13 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   {
     static constexpr float SPEED = glm::radians(90.0f);
     static auto start_time = std::chrono::steady_clock::now();
-    
+
     const auto current_time = std::chrono::steady_clock::now();
     const auto seconds = std::chrono::duration<float>(current_time - start_time).count();
 
-    g_vertex_uniform_data.model = 
-      glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f))
-      * glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
+    g_vertex_uniform_data.model =
+        glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f)) *
+        glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
     m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
   }
 
@@ -582,15 +564,15 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdBeginRendering(cmd, &rendering_info);
 
   VkViewport viewport = {
-    .width = (float)m_swapchain_extent.width,
-    .height = (float)m_swapchain_extent.height,
-    .minDepth = 0.0f,
-    .maxDepth = 1.0f,
+      .width = (float) m_swapchain_extent.width,
+      .height = (float) m_swapchain_extent.height,
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
   };
   vkCmdSetViewport(cmd, 0, 1, &viewport);
 
   VkRect2D scissor{
-    .extent = m_swapchain_extent,
+      .extent = m_swapchain_extent,
   };
   vkCmdSetScissor(cmd, 0, 1, &scissor);
 
@@ -601,7 +583,7 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 
   m_shader_data_table->bind(cmd);
 
-  vkCmdDrawIndexed(cmd, sizeof(INDICES)/sizeof(INDICES[0]), 1, 0, 0, 0);
+  vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
 
   vkCmdEndRendering(cmd);
 }
@@ -612,13 +594,14 @@ bool Renderer::execute_single_shot_commands(std::function<Result<>(VkCommandBuff
     return false;
 
   VkCommandBufferBeginInfo begin_info{
-    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
   };
   if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
     return false;
 
   const auto result = commands(m_single_shot_command_buffer);
-  if (result.is_error()) {
+  if (result.is_error())
+  {
     printf("%s\n", result.get_error().c_str());
     return false;
   }
@@ -627,9 +610,9 @@ bool Renderer::execute_single_shot_commands(std::function<Result<>(VkCommandBuff
     return false;
 
   VkSubmitInfo submit_info{
-    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-    .commandBufferCount = 1,
-    .pCommandBuffers = &m_single_shot_command_buffer,
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &m_single_shot_command_buffer,
   };
   if (vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_single_shot_command_fence) != VK_SUCCESS)
     return false;
@@ -651,9 +634,6 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
 
 bool Renderer::create_device_and_swapchain()
 {
-  
-
-  
 
   const auto surface_formats =
       vkEnumCall<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, m_physical_device, m_surface);
@@ -843,27 +823,19 @@ bool Renderer::recreate_swapchain()
     m_swapchain_image_views.push_back(view);
   }
 
-  CHECK_RESULT(
-    Image::create(
-      m_device,
-      m_allocator,
-      VK_FORMAT_D32_SFLOAT,
-      m_swapchain_extent,
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-    ),
-    m_depth_attachment
-  );
-  if (!execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<>
-    {
-      if (!m_depth_attachment->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
-        return "Failed to transition depth image layout";
-    
-      return Ok();
-    })
-  )
+  CHECK_RESULT(Image::create(m_device, m_allocator, VK_FORMAT_D32_SFLOAT, m_swapchain_extent,
+                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
+               m_depth_attachment);
+  if (!execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+        if (!m_depth_attachment->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
+          return "Failed to transition depth image layout";
+
+        return Ok();
+      }))
     return false;
 
-  g_vertex_uniform_data.projection = glm::perspective(glm::half_pi<float>(), (float)m_swapchain_extent.width/(float)m_swapchain_extent.height, 0.1f, 1.0f);
+  g_vertex_uniform_data.projection = glm::perspective(
+      glm::half_pi<float>(), (float) m_swapchain_extent.width / (float) m_swapchain_extent.height, 0.1f, 1.0f);
   g_vertex_uniform_data.projection[1][1] *= -1.0f;
 
   m_swapchain_is_out_of_date = false;

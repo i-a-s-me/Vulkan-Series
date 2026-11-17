@@ -18,7 +18,7 @@ class Renderer
     VkCommandBuffer cmd_buffer{};
   };
 
-public:
+  public:
   Renderer() = default;
   Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
@@ -31,8 +31,7 @@ public:
 
   void resize(uint32_t fb_width, uint32_t fb_height);
 
-private:
-  
+  private:
   bool create_frame_resources();
 
   void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
@@ -41,7 +40,7 @@ private:
 
   bool recreate_swapchain();
 
-private:
+  private:
   uint32_t m_swapchain_image_count{};
   std::vector<VkSemaphore> m_render_done_semaphores;
   VkSurfaceFormatKHR m_swapchain_format{};
@@ -50,7 +49,7 @@ private:
   bool m_swapchain_is_out_of_date{};
   VkSurfaceTransformFlagBitsKHR m_swapchain_pre_transform{};
   Box<Image> m_depth_attachment{};
-  
+
   VkSwapchainKHR m_swapchain{};
   std::vector<VkImage> m_swapchain_images{};
   std::vector<VkImageView> m_swapchain_image_views{};
@@ -68,6 +67,6 @@ private:
 
   Box<Image> m_texture_image{};
   VkSampler m_texture_sampler{};
-  
+
   Box<ShaderDataTable> m_shader_data_table{};
 };
