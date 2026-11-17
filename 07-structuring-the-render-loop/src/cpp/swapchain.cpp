@@ -69,8 +69,8 @@ Result<> Swapchain::update()
   vkWaitForFences(m_core->get_device(), 1, &current_frame.fen_in_flight, VK_TRUE, UINT64_MAX);
 
   uint32_t image_index{};
-  switch (vkAcquireNextImageKHR(m_core->get_device(), m_swapchain, UINT64_MAX, current_frame.sm_image_available, VK_NULL_HANDLE,
-                                &image_index))
+  switch (vkAcquireNextImageKHR(m_core->get_device(), m_swapchain, UINT64_MAX, current_frame.sm_image_available,
+                                VK_NULL_HANDLE, &image_index))
   {
   case VK_ERROR_OUT_OF_DATE_KHR:
     PROPAGATE_RESULT_ERROR(recreate());
@@ -91,11 +91,76 @@ Result<> Swapchain::update()
   if (vkBeginCommandBuffer(current_frame.cmd_buffer, &cmd_begin_info) != VK_SUCCESS)
     return "Failed to start recording command buffer";
 
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index],
-                                      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
     return "Failed to transition swapchain image";
 
-  //draw_frame(current_frame.cmd_buffer, m_image_views[image_index]);
+  VkRenderingAttachmentInfo color_attachment_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = m_image_views[image_index],
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue =
+          {
+              .color =
+                  {
+                      0.1f,
+                      0.1f,
+                      0.1f,
+                      1.0f,
+                  },
+          },
+  };
+
+  VkRenderingAttachmentInfo depth_attachment_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = m_depth_attachment->get_view(),
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue =
+          {
+              .depthStencil =
+                  {
+                      1.0f,
+                      0,
+                  },
+          },
+  };
+
+  VkRenderingInfo rendering_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .renderArea =
+          {
+              {},
+              m_extent,
+          },
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment_info,
+      .pDepthAttachment = &depth_attachment_info,
+  };
+
+  vkCmdBeginRendering(current_frame.cmd_buffer, &rendering_info);
+
+  VkViewport viewport = {
+      .width = (float) m_extent.width,
+      .height = (float) m_extent.height,
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
+  };
+  vkCmdSetViewport(current_frame.cmd_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor{
+      .extent = m_extent,
+  };
+  vkCmdSetScissor(current_frame.cmd_buffer, 0, 1, &scissor);
+
+  // draw_frame(, m_image_views[image_index]);
+
+  vkCmdEndRendering(current_frame.cmd_buffer);
 
   if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index],
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))

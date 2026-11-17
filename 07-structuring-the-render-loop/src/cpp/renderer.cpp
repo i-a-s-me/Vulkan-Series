@@ -362,68 +362,7 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
     m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
   }
 
-  VkRenderingAttachmentInfo color_attachment_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = color_attachment,
-      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .clearValue =
-          {
-              .color =
-                  {
-                      0.1f,
-                      0.1f,
-                      0.1f,
-                      1.0f,
-                  },
-          },
-  };
-
-  VkRenderingAttachmentInfo depth_attachment_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = m_depth_attachment->get_view(),
-      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .clearValue =
-          {
-              .depthStencil =
-                  {
-                      1.0f,
-                      0,
-                  },
-          },
-  };
-
-  VkRenderingInfo rendering_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-      .renderArea =
-          {
-              {},
-              m_swapchain_extent,
-          },
-      .layerCount = 1,
-      .viewMask = 0,
-      .colorAttachmentCount = 1,
-      .pColorAttachments = &color_attachment_info,
-      .pDepthAttachment = &depth_attachment_info,
-  };
-
-  vkCmdBeginRendering(cmd, &rendering_info);
-
-  VkViewport viewport = {
-      .width = (float) m_swapchain_extent.width,
-      .height = (float) m_swapchain_extent.height,
-      .minDepth = 0.0f,
-      .maxDepth = 1.0f,
-  };
-  vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-  VkRect2D scissor{
-      .extent = m_swapchain_extent,
-  };
-  vkCmdSetScissor(cmd, 0, 1, &scissor);
+  
 
   m_graphics_pipeline->bind(cmd);
 
@@ -434,7 +373,6 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 
   vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
 
-  vkCmdEndRendering(cmd);
 }
 
 
