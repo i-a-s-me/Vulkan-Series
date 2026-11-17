@@ -1,7 +1,7 @@
 // Released into the public domain.
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
-#include <sample.hpp>
+#include <renderer.hpp>
 
 #include <set>
 #include <chrono>
@@ -133,7 +133,7 @@ static Result<std::vector<uint32_t>> load_shader_from_file(const std::string& pa
   return std::move(data);
 }
 
-SampleVulkan::~SampleVulkan()
+Renderer::~Renderer()
 {
   if (m_device)
   {
@@ -194,7 +194,7 @@ SampleVulkan::~SampleVulkan()
   }
 }
 
-bool SampleVulkan::initialize(
+bool Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
   if (!create_instance())
@@ -429,7 +429,7 @@ bool SampleVulkan::initialize(
   return true;
 }
 
-bool SampleVulkan::render()
+bool Renderer::render()
 {
   const auto &current_frame = m_frames[m_current_frame_index];
 
@@ -537,7 +537,7 @@ bool SampleVulkan::render()
   return true;
 }
 
-void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
+void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
 {
   {
     static constexpr float SPEED = glm::radians(90.0f);
@@ -627,7 +627,7 @@ void SampleVulkan::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdEndRendering(cmd);
 }
 
-bool SampleVulkan::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
+bool Renderer::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
 {
   if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
     return false;
@@ -664,7 +664,7 @@ bool SampleVulkan::execute_single_shot_commands(std::function<Result<>(VkCommand
   return true;
 }
 
-bool SampleVulkan::create_instance()
+bool Renderer::create_instance()
 {
   // This is a sample, not production code, so we always enable validation layers,
   // unless they're unavailable
@@ -745,7 +745,7 @@ bool SampleVulkan::create_instance()
   return true;
 }
 
-bool SampleVulkan::select_physical_device()
+bool Renderer::select_physical_device()
 {
   const auto find_queue_families = [&](VkPhysicalDevice p) -> std::pair<uint32_t, uint32_t> {
     uint32_t graphics_family_index{UINT32_MAX}, present_family_index{UINT32_MAX};
@@ -814,13 +814,13 @@ bool SampleVulkan::select_physical_device()
   return true;
 }
 
-void SampleVulkan::resize(uint32_t fb_width, uint32_t fb_height)
+void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
 {
   m_pending_swapchain_extent = {fb_width, fb_height};
   m_swapchain_is_out_of_date = true;
 }
 
-bool SampleVulkan::create_device_and_swapchain()
+bool Renderer::create_device_and_swapchain()
 {
   const float priority = 1.0f;
   std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
@@ -931,7 +931,7 @@ bool SampleVulkan::create_device_and_swapchain()
   return recreate_swapchain();
 }
 
-bool SampleVulkan::create_frame_resources()
+bool Renderer::create_frame_resources()
 {
   VkCommandPoolCreateInfo commmand_pool_create_info{
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -981,7 +981,7 @@ bool SampleVulkan::create_frame_resources()
   return true;
 }
 
-bool SampleVulkan::recreate_swapchain()
+bool Renderer::recreate_swapchain()
 {
   vkDeviceWaitIdle(m_device);
 

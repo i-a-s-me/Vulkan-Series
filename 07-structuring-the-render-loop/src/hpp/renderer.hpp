@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <functional>
 
-class SampleVulkan
+class Renderer
 {
   static constexpr uint32_t NUM_CONCURRENT_FRAMES = 3;
   static constexpr const char *VALIDATION_LAYER_NAME = "VK_LAYER_KHRONOS_validation";
@@ -28,11 +28,11 @@ class SampleVulkan
   };
 
 public:
-  SampleVulkan() = default;
-  SampleVulkan(const SampleVulkan &) = delete;
-  SampleVulkan &operator=(const SampleVulkan &) = delete;
+  Renderer() = default;
+  Renderer(const Renderer &) = delete;
+  Renderer &operator=(const Renderer &) = delete;
 
-  ~SampleVulkan();
+  ~Renderer();
 
   bool initialize(std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
 

@@ -38,8 +38,8 @@ add_executable(App
     src/cpp/main.cpp
     src/cpp/image.cpp
     src/cpp/buffer.cpp
-    src/cpp/sample.cpp
     src/cpp/pipeline.cpp
+    src/cpp/renderer.cpp
     src/cpp/shader_data_table.cpp
 )
 

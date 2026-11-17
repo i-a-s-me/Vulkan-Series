@@ -1,7 +1,7 @@
 // Released into the public domain.
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
-#include <sample.hpp>
+#include <renderer.hpp>
 
 class SampleApp
 {
@@ -15,7 +15,7 @@ class SampleApp
 
   private:
   GLFWwindow *m_window{};
-  Box<SampleVulkan> m_vulkan{};
+  Box<Renderer> m_vulkan{};
 };
 
 int main(int argc, char *argv[])
@@ -40,7 +40,7 @@ int SampleApp::launch(int argc, char *argv[])
     return -1;
   }
 
-  m_vulkan = Box<SampleVulkan>(new SampleVulkan());
+  m_vulkan = Box<Renderer>(new Renderer());
   if (!m_vulkan->initialize([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
                                                 VkSurfaceKHR &out_surface) -> bool {
         if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
@@ -74,7 +74,7 @@ int SampleApp::launch(int argc, char *argv[])
     glfwGetFramebufferSize(window, &fb_width, &fb_height);
     if ((fb_width == 0) || (fb_height == 0))
       return;
-    static_cast<SampleVulkan *>(glfwGetWindowUserPointer(window))->resize(fb_width, fb_height);
+    static_cast<Renderer *>(glfwGetWindowUserPointer(window))->resize(fb_width, fb_height);
   });
 
   while (!glfwWindowShouldClose(m_window))
