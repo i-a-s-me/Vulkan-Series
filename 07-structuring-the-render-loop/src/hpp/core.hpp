@@ -12,7 +12,7 @@ class VulkanCore
   public:
   static Result<Box<VulkanCore>> create(
       std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
-      uint32_t &initial_surface_width, uint32_t &initial_surface_height);
+      VkExtent2D &initial_surface_extent);
 
   VulkanCore(const VulkanCore &) = delete;
   VulkanCore &operator=(const VulkanCore &) = delete;

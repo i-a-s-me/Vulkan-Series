@@ -7,10 +7,11 @@
 #include "buffer.hpp"
 #include "pipeline.hpp"
 
+class VulkanCore;
+class Swapchain;
+
 class Renderer
 {
-  
-
   public:
   Renderer() = default;
   Renderer(const Renderer &) = delete;
@@ -25,12 +26,8 @@ class Renderer
   void resize(uint32_t fb_width, uint32_t fb_height);
 
   private:
-  bool create_frame_resources();
-
-  void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
-
-  private:
-  
+  Box<VulkanCore> m_core{};
+  Box<Swapchain> m_swapchain{};
 
   Box<Pipeline> m_graphics_pipeline{};
 

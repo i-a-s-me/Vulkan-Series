@@ -1,7 +1,9 @@
 // Released into the public domain.
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
+#include <core.hpp>
 #include <renderer.hpp>
+#include <swapchain.hpp>
 
 #include <fstream>
 
@@ -65,37 +67,6 @@ static const uint32_t INDICES[36] = {
     20, 21, 22, 22, 23, 20,
 };
 
-// Create checkerboard pattern pixels (violet and white)
-static std::vector<uint8_t> get_checkerboard_pattern_pixels(uint32_t width, uint32_t height, uint32_t checker_size = 4)
-{
-  std::vector<uint8_t> rgba_data(width * height * 4);
-
-  for (uint32_t y = 0; y < height; ++y)
-  {
-    for (uint32_t x = 0; x < width; ++x)
-    {
-      const bool is_violet = ((x / checker_size) % 2) == ((y / checker_size) % 2);
-      uint32_t index = (y * width + x) * 4;
-      if (is_violet)
-      {
-        rgba_data[index + 0] = 255;
-        rgba_data[index + 1] = 0;
-        rgba_data[index + 2] = 255;
-        rgba_data[index + 3] = 255;
-      }
-      else
-      {
-        rgba_data[index + 0] = 255;
-        rgba_data[index + 1] = 255;
-        rgba_data[index + 2] = 255;
-        rgba_data[index + 3] = 255;
-      }
-    }
-  }
-
-  return rgba_data;
-}
-
 static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &path)
 {
   std::ifstream f(path, std::ios::in | std::ios::binary | std::ios::ate);
@@ -112,39 +83,29 @@ static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &pa
 
 Renderer::~Renderer()
 {
-  if (m_device)
-  {
-    vkDeviceWaitIdle(m_device);
+  if (!m_core || !m_core->get_device())
+    return;
 
-    m_texture_image.reset();
+  m_core->wait_idle();
 
-    vkDestroySampler(m_device, m_texture_sampler, nullptr);
+  m_texture_image.reset();
 
+  vkDestroySampler(m_core->get_device(), m_texture_sampler, nullptr);
 
+  m_graphics_pipeline.reset();
+  m_shader_data_table.reset();
 
-    m_graphics_pipeline.reset();
-    m_shader_data_table.reset();
-
-    m_vertex_buffer.reset();
-    m_index_buffer.reset();
-    m_staging_buffer.reset();
-    m_vertex_uniform_buffer.reset();
-
-    m_depth_attachment.reset();
-
-    
-
-  }
-
+  m_vertex_buffer.reset();
+  m_index_buffer.reset();
+  m_staging_buffer.reset();
+  m_vertex_uniform_buffer.reset();
 }
 
 bool Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
 
-
-
-  CHECK_RESULT(ShaderDataTable::create(m_device,
+  CHECK_RESULT(ShaderDataTable::create(m_core->get_device(),
                                        std::initializer_list<ShaderDataTable::EntryDescription>{
                                            {
                                                .name = "vertex_uniform_data",
@@ -362,8 +323,6 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
     m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
   }
 
-  
-
   m_graphics_pipeline->bind(cmd);
 
   m_vertex_buffer->bind(cmd);
@@ -372,12 +331,8 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   m_shader_data_table->bind(cmd);
 
   vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
-
 }
 
-
-  
-
-      g_vertex_uniform_data.projection = glm::perspective(
-      glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
-  g_vertex_uniform_data.projection[1][1] *= -1.0f;
+g_vertex_uniform_data.projection =
+    glm::perspective(glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
+g_vertex_uniform_data.projection[1][1] *= -1.0f;
