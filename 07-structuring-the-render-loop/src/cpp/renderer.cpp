@@ -588,50 +588,6 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   vkCmdEndRendering(cmd);
 }
 
-bool Renderer::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
-{
-  if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
-    return false;
-
-  VkCommandBufferBeginInfo begin_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-  };
-  if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
-    return false;
-
-  const auto result = commands(m_single_shot_command_buffer);
-  if (result.is_error())
-  {
-    printf("%s\n", result.get_error().c_str());
-    return false;
-  }
-
-  if (vkEndCommandBuffer(m_single_shot_command_buffer) != VK_SUCCESS)
-    return false;
-
-  VkSubmitInfo submit_info{
-      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      .commandBufferCount = 1,
-      .pCommandBuffers = &m_single_shot_command_buffer,
-  };
-  if (vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_single_shot_command_fence) != VK_SUCCESS)
-    return false;
-
-  if (vkWaitForFences(m_device, 1, &m_single_shot_command_fence, true, UINT64_MAX) != VK_SUCCESS)
-    return false;
-
-  if (vkResetFences(m_device, 1, &m_single_shot_command_fence) != VK_SUCCESS)
-    return false;
-
-  return true;
-}
-
-void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
-{
-  m_pending_swapchain_extent = {fb_width, fb_height};
-  m_swapchain_is_out_of_date = true;
-}
-
 bool Renderer::create_device_and_swapchain()
 {
 
@@ -704,4 +660,3 @@ bool Renderer::create_frame_resources()
       g_vertex_uniform_data.projection = glm::perspective(
       glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
   g_vertex_uniform_data.projection[1][1] *= -1.0f;
-  

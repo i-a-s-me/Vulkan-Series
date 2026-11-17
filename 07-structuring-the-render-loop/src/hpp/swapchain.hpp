@@ -24,12 +24,15 @@ class Swapchain
 
   ~Swapchain();
 
-  Result<> recreate();
+  void resize(uint32_t fb_width, uint32_t fb_height);
+  void request_recreation();
 
   private:
   Swapchain(const VulkanCore *core) : m_core(core)
   {
   }
+
+  Result<> recreate();
 
   private:
   const VulkanCore *const m_core;

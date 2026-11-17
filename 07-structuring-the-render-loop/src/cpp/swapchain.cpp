@@ -33,6 +33,17 @@ Swapchain::~Swapchain()
     return;
 }
 
+void Swapchain::resize(uint32_t fb_width, uint32_t fb_height)
+{
+  m_pending_extent = {fb_width, fb_height};
+  request_recreation();
+}
+
+void Swapchain::request_recreation()
+{
+  m_is_out_of_date = true;
+}
+
 Result<> Swapchain::recreate()
 {
   m_core->wait_idle();

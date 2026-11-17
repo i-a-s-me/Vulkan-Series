@@ -53,6 +53,39 @@ VulkanCore::~VulkanCore()
   }
 }
 
+Result<> VulkanCore::execute_single_shot_commands(std::function<Result<>(VkCommandBuffer)> commands)
+{
+  if (vkResetCommandBuffer(m_single_shot_command_buffer, 0) != VK_SUCCESS)
+    return "Failed to reset single shot command buffer";
+
+  VkCommandBufferBeginInfo begin_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+  };
+  if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
+    return "Failed to begin single shot command buffer";
+
+  PROPAGATE_RESULT_ERROR(commands(m_single_shot_command_buffer));
+
+  if (vkEndCommandBuffer(m_single_shot_command_buffer) != VK_SUCCESS)
+    return "Failed to end single shot command buffer";
+
+  VkSubmitInfo submit_info{
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &m_single_shot_command_buffer,
+  };
+  if (vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_single_shot_command_fence) != VK_SUCCESS)
+    return "Failed to submit single shot command buffer";
+
+  if (vkWaitForFences(m_device, 1, &m_single_shot_command_fence, true, UINT64_MAX) != VK_SUCCESS)
+    return "Failed to wait for single shot fence";
+
+  if (vkResetFences(m_device, 1, &m_single_shot_command_fence) != VK_SUCCESS)
+    return "Failed to reset single shot fence";
+
+  return Ok();
+}
+
 Result<> VulkanCore::create_instance()
 {
   // This is a sample, not production code, so we always enable validation layers,
