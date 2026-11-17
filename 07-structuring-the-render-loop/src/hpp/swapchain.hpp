@@ -30,6 +30,27 @@ class Swapchain
   Result<VkCommandBuffer> begin_frame();
   Result<> end_frame();
 
+  public:
+  VkFormat get_color_format() const
+  {
+    return m_format.format;
+  }
+
+  VkFormat get_depth_format() const
+  {
+    return m_depth_image->get_format();
+  }
+
+  VkExtent2D get_extent() const
+  {
+    return m_extent;
+  }
+
+  float get_aspect_ratio() const
+  {
+    return (float)m_extent.width / (float)m_extent.height;
+  }
+
   private:
   Swapchain(const VulkanCore *core) : m_core(core)
   {

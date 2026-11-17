@@ -19,9 +19,9 @@ class Renderer
 
   ~Renderer();
 
-  bool initialize(std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
+  Result<> initialize(std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
 
-  bool render();
+  Result<> render();
 
   void resize(uint32_t fb_width, uint32_t fb_height);
 

@@ -101,7 +101,7 @@ Renderer::~Renderer()
   m_vertex_uniform_buffer.reset();
 }
 
-bool Renderer::initialize(
+Result<> Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
 
@@ -132,7 +132,7 @@ bool Renderer::initialize(
 
   CHECK_RESULT(
       Pipeline::create(
-          m_device, m_swapchain_format.format, m_depth_attachment->get_format(),
+          m_core->get_device(), m_swapchain->get_color_format(), m_swapchain->get_depth_format(),
           std::initializer_list<VkVertexInputBindingDescription>{
               {.binding = 0, .stride = sizeof(Vertex), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX},
           },
@@ -150,38 +150,35 @@ bool Renderer::initialize(
       m_graphics_pipeline);
 
   CHECK_RESULT(
-      Buffer::create(m_allocator,
+      Buffer::create(m_core->get_allocator(),
                      std::max(sizeof(VERTICES), sizeof(INDICES)), // maximum size we'll need for our staging operations
                      Buffer::EUsage::STAGING),
       m_staging_buffer);
 
-  CHECK_RESULT(Buffer::create(m_allocator, sizeof(VERTICES), Buffer::EUsage::VERTEX), m_vertex_buffer);
+  CHECK_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VERTICES), Buffer::EUsage::VERTEX), m_vertex_buffer);
 
-  CHECK_RESULT(Buffer::create(m_allocator, sizeof(INDICES), Buffer::EUsage::INDEX), m_index_buffer);
+  CHECK_RESULT(Buffer::create(m_core->get_allocator(), sizeof(INDICES), Buffer::EUsage::INDEX), m_index_buffer);
 
-  CHECK_RESULT(Buffer::create(m_allocator, sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
+  CHECK_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
                m_vertex_uniform_buffer);
 
   {
     g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     g_vertex_uniform_data.view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    g_vertex_uniform_data.projection =
+        glm::perspective(glm::half_pi<float>(), m_swapchain->get_aspect_ratio(), 0.1f, 1.0f);
+    g_vertex_uniform_data.projection[1][1] *= -1.0f;
 
     if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
-    {
-      printf("Failed to copy data to uniform buffer\n");
-      return false;
-    }
+      return "Failed to copy data to uniform buffer";
   }
 
   { // copy VERTICES to vertex buffer
     if (!m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES)))
-    {
-      printf("Failed to copy VERTICES to staging buffer\n");
-      return false;
-    }
+      return "Failed to copy VERTICES to staging buffer";
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    PROPAGATE_RESULT_ERROR(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
           .srcOffset = 0,
           .dstOffset = 0,
@@ -199,22 +196,14 @@ bool Renderer::initialize(
                            nullptr, 0, nullptr);
 
       return Ok{};
-    });
-    if (!success)
-    {
-      printf("Failed to copy staging buffer to vertex buffer\n");
-      return false;
-    }
+    }));
   }
 
   { // copy INDICES to index buffer
     if (!m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES)))
-    {
-      printf("Failed to copy INDICES to staging buffer\n");
-      return false;
-    }
+      return "Failed to copy INDICES to staging buffer";
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    PROPAGATE_RESULT_ERROR(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
           .srcOffset = 0,
           .dstOffset = 0,
@@ -232,12 +221,7 @@ bool Renderer::initialize(
                            nullptr, 0, nullptr);
 
       return Ok{};
-    });
-    if (!success)
-    {
-      printf("Failed to copy staging buffer to index buffer\n");
-      return false;
-    }
+    }));
   }
 
   {
@@ -250,11 +234,8 @@ bool Renderer::initialize(
         .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
     };
 
-    if (vkCreateSampler(m_device, &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS)
-    {
-      printf("Failed to create the texture sampler\n");
-      return false;
-    }
+    if (vkCreateSampler(m_core->get_device(), &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS)
+      return "Failed to create the texture sampler";
   }
 
   {
@@ -262,19 +243,16 @@ bool Renderer::initialize(
     VkExtent2D extent{};
 
     if (!Image::load_rgba_from_file("resources/Ground037_1K-PNG_Color.png", pixels, extent))
-    {
-      printf("Failed to load texture data from the disk\n");
-      return false;
-    }
+      return "Failed to load texture data from the disk";
 
-    CHECK_RESULT(Image::create(m_device, m_allocator, VK_FORMAT_R8G8B8A8_SRGB, extent,
+    CHECK_RESULT(Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_R8G8B8A8_SRGB, extent,
                                VK_IMAGE_USAGE_SAMPLED_BIT |
                                    VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader
                                                                    // and copy data from staging buffer into this image.
                                ),
                  m_texture_image);
 
-    const auto success = execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    PROPAGATE_RESULT_ERROR(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
 
@@ -285,30 +263,21 @@ bool Renderer::initialize(
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";
 
       return Ok{};
-    });
-    if (!success)
-    {
-      printf("Failed to copy pixels to the image\n");
-      return false;
-    }
+    }));
   }
 
   if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", m_vertex_uniform_buffer.get()))
-  {
-    printf("Failed to write uniform buffer to shader data table\n");
-    return false;
-  }
+    return "Failed to write uniform buffer to shader data table";
+
   if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler))
-  {
-    printf("Failed to write texture image to shader data table\n");
-    return false;
-  }
+    return "Failed to write texture image to shader data table";
+  
   m_shader_data_table->flush_writes();
 
-  return true;
+  return Ok();
 }
 
-void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
+Result<> Renderer::render()
 {
   {
     static constexpr float SPEED = glm::radians(90.0f);
@@ -323,6 +292,9 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
     m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
   }
 
+  VkCommandBuffer cmd;
+  CHECK_RESULT(m_swapchain->begin_frame(), cmd);
+
   m_graphics_pipeline->bind(cmd);
 
   m_vertex_buffer->bind(cmd);
@@ -331,8 +303,12 @@ void Renderer::draw_frame(VkCommandBuffer cmd, VkImageView color_attachment)
   m_shader_data_table->bind(cmd);
 
   vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
+
+  PROPAGATE_RESULT_ERROR(m_swapchain->end_frame());
 }
 
+/*
 g_vertex_uniform_data.projection =
     glm::perspective(glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
 g_vertex_uniform_data.projection[1][1] *= -1.0f;
+*/
