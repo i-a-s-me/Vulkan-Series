@@ -7,11 +7,14 @@
 #include <span>
 #include <deque>
 #include <cstdio>
+#include <vector>
+#include <cassert>
+#include <stdint.h>
 #include <memory>
 #include <string>
 #include <cstddef>
 #include <variant>
-#include <cassert>
+#include <functional>
 #include <type_traits>
 
 #define GLFW_INCLUDE_VULKAN
@@ -23,14 +26,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define CHECK_RESULT(_result, _var)             \
-{                                               \
-  auto result = _result;                        \
-  if (result.is_error()) {                      \
-    printf("%s\n", result.get_error().c_str()); \
-    return false;                               \
-  }                                             \
-  _var = std::move(result).take_value();        \
+#define CHECK_RESULT(_result, _var)               \
+{                                                 \
+    auto result = _result;                        \
+    if (result.is_error()) {                      \
+      printf("%s\n", result.get_error().c_str()); \
+      return false;                               \
+    }                                             \
+    _var = std::move(result).take_value();        \
+}
+
+#define PROPAGATE_RESULT_ERROR(_result)  \
+{                                        \
+    const auto result = _result;         \
+    if (result.is_error())               \
+        return result.get_error();       \
 }
 
 struct Ok {};

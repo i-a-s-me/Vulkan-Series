@@ -7,18 +7,9 @@
 #include "buffer.hpp"
 #include "pipeline.hpp"
 
-#include <vector>
-#include <string>
-#include <cassert>
-#include <stdint.h>
-#include <functional>
-
 class Renderer
 {
   static constexpr uint32_t NUM_CONCURRENT_FRAMES = 3;
-  static constexpr const char *VALIDATION_LAYER_NAME = "VK_LAYER_KHRONOS_validation";
-  static constexpr const char *SWAPCHAIN_DEVICE_EXTENSION_NAME = "VK_KHR_swapchain";
-  static constexpr const char *PORTABILITY_SUBSET_DEVICE_EXTENSION_NAME = "VK_KHR_portability_subset";
 
   struct FrameResourceSet
   {
@@ -41,9 +32,7 @@ public:
   void resize(uint32_t fb_width, uint32_t fb_height);
 
 private:
-  bool create_instance();
-  bool select_physical_device();
-  bool create_device_and_swapchain();
+  
   bool create_frame_resources();
 
   void draw_frame(VkCommandBuffer cmd, VkImageView color_attachment);
@@ -53,14 +42,6 @@ private:
   bool recreate_swapchain();
 
 private:
-  VkInstance m_instance{};
-  VkDebugUtilsMessengerEXT m_debug_messenger{};
-
-  VkSurfaceKHR m_surface{};
-  std::string m_physical_device_name{};
-  VkPhysicalDevice m_physical_device{};
-  uint32_t m_graphics_queue_family_index{};
-  uint32_t m_present_queue_family_index{};
   uint32_t m_swapchain_image_count{};
   std::vector<VkSemaphore> m_render_done_semaphores;
   VkSurfaceFormatKHR m_swapchain_format{};
@@ -70,10 +51,7 @@ private:
   bool m_swapchain_is_out_of_date{};
   VkSurfaceTransformFlagBitsKHR m_swapchain_pre_transform{};
   Box<Image> m_depth_attachment{};
-
-  VkDevice m_device{};
-  VkQueue m_graphics_queue{};
-  VkQueue m_present_queue{};
+  
   VkSwapchainKHR m_swapchain{};
   std::vector<VkImage> m_swapchain_images{};
   std::vector<VkImageView> m_swapchain_image_views{};
@@ -84,16 +62,10 @@ private:
 
   Box<Pipeline> m_graphics_pipeline{};
 
-  VmaAllocator m_allocator{};
-
   Box<Buffer> m_staging_buffer{};
   Box<Buffer> m_vertex_buffer{};
   Box<Buffer> m_index_buffer{};
   Box<Buffer> m_vertex_uniform_buffer{};
-
-  VkFence m_single_shot_command_fence{};
-  VkCommandPool m_single_shot_command_pool{};
-  VkCommandBuffer m_single_shot_command_buffer{};
 
   Box<Image> m_texture_image{};
   VkSampler m_texture_sampler{};
