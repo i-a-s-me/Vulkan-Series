@@ -27,6 +27,8 @@ class Swapchain
   void resize(uint32_t fb_width, uint32_t fb_height);
   void request_recreation();
 
+  Result<> update();
+
   private:
   Swapchain(const VulkanCore *core) : m_core(core)
   {

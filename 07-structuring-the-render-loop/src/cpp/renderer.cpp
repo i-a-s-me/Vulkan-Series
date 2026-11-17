@@ -3,13 +3,7 @@
 
 #include <renderer.hpp>
 
-#include <set>
-#include <chrono>
-#include <stdio.h>
-#include <string.h>
-#include <utility>
 #include <fstream>
-#include <algorithm>
 
 struct Vertex
 {
@@ -148,11 +142,7 @@ bool Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
 
-  if (!create_device_and_swapchain())
-    return false;
 
-  if (!create_frame_resources())
-    return false;
 
   CHECK_RESULT(ShaderDataTable::create(m_device,
                                        std::initializer_list<ShaderDataTable::EntryDescription>{
@@ -353,114 +343,6 @@ bool Renderer::initialize(
     return false;
   }
   m_shader_data_table->flush_writes();
-
-  return true;
-}
-
-bool Renderer::render()
-{
-  const auto &current_frame = m_frames[m_current_frame_index];
-
-  vkWaitForFences(m_device, 1, &current_frame.fen_in_flight, VK_TRUE, UINT64_MAX);
-
-  uint32_t image_index{};
-  switch (vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, current_frame.sm_image_available, VK_NULL_HANDLE,
-                                &image_index))
-  {
-  case VK_ERROR_OUT_OF_DATE_KHR:
-    if (!recreate_swapchain())
-      return false;
-    return true;
-
-  case VK_SUCCESS:
-  case VK_SUBOPTIMAL_KHR:
-    break;
-
-  default:
-    printf("Failed to acquire swapchain image\n");
-    return false;
-  }
-
-  VkCommandBufferBeginInfo cmd_begin_info{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-  };
-  vkResetCommandBuffer(current_frame.cmd_buffer, 0);
-  if (vkBeginCommandBuffer(current_frame.cmd_buffer, &cmd_begin_info) != VK_SUCCESS)
-  {
-    printf("Failed to start recording command buffer\n");
-    return false;
-  }
-
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_swapchain_images[image_index],
-                                      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
-  {
-    printf("Failed to transition swapchain image\n");
-    return false;
-  }
-
-  draw_frame(current_frame.cmd_buffer, m_swapchain_image_views[image_index]);
-
-  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_swapchain_images[image_index],
-                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
-  {
-    printf("Failed to transition swapchain image\n");
-    return false;
-  }
-
-  if (vkEndCommandBuffer(current_frame.cmd_buffer) != VK_SUCCESS)
-  {
-    printf("Failed to finish recording command buffer\n");
-    return false;
-  }
-
-  VkPipelineStageFlags submit_pipeline_wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSubmitInfo submit_info{
-      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &current_frame.sm_image_available,
-      .pWaitDstStageMask = &submit_pipeline_wait_stage,
-      .commandBufferCount = 1,
-      .pCommandBuffers = &current_frame.cmd_buffer,
-      .signalSemaphoreCount = 1,
-      .pSignalSemaphores = &m_render_done_semaphores[image_index],
-  };
-
-  vkResetFences(m_device, 1, &current_frame.fen_in_flight);
-  if (vkQueueSubmit(m_graphics_queue, 1, &submit_info, current_frame.fen_in_flight) != VK_SUCCESS)
-  {
-    printf("Failed to submit frame command buffer\n");
-    return false;
-  }
-
-  VkPresentInfoKHR present_info{
-      .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-      .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &m_render_done_semaphores[image_index],
-      .swapchainCount = 1,
-      .pSwapchains = &m_swapchain,
-      .pImageIndices = &image_index,
-  };
-
-  switch (vkQueuePresentKHR(m_present_queue, &present_info))
-  {
-  case VK_ERROR_OUT_OF_DATE_KHR:
-  case VK_SUBOPTIMAL_KHR:
-    if (!recreate_swapchain())
-      return false;
-    break;
-
-  case VK_SUCCESS:
-    break;
-
-  default:
-    printf("Failed to present swapchain\n");
-    return false;
-  }
-
-  if (m_swapchain_is_out_of_date && !recreate_swapchain())
-    return false;
-
-  m_current_frame_index = (m_current_frame_index + 1) % NUM_CONCURRENT_FRAMES;
 
   return true;
 }

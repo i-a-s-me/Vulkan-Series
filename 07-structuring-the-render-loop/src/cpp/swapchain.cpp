@@ -2,6 +2,7 @@
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
 #include <core.hpp>
+#include <image.hpp>
 #include <swapchain.hpp>
 
 Result<Box<Swapchain>> Swapchain::create(const VulkanCore *core, VkExtent2D initial_extent)
@@ -59,6 +60,95 @@ void Swapchain::resize(uint32_t fb_width, uint32_t fb_height)
 void Swapchain::request_recreation()
 {
   m_is_out_of_date = true;
+}
+
+Result<> Swapchain::update()
+{
+  const auto &current_frame = m_frames[m_current_frame_index];
+
+  vkWaitForFences(m_core->get_device(), 1, &current_frame.fen_in_flight, VK_TRUE, UINT64_MAX);
+
+  uint32_t image_index{};
+  switch (vkAcquireNextImageKHR(m_core->get_device(), m_swapchain, UINT64_MAX, current_frame.sm_image_available, VK_NULL_HANDLE,
+                                &image_index))
+  {
+  case VK_ERROR_OUT_OF_DATE_KHR:
+    PROPAGATE_RESULT_ERROR(recreate());
+    return Ok();
+
+  case VK_SUCCESS:
+  case VK_SUBOPTIMAL_KHR:
+    break;
+
+  default:
+    return "Failed to acquire swapchain image";
+  }
+
+  VkCommandBufferBeginInfo cmd_begin_info{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+  };
+  vkResetCommandBuffer(current_frame.cmd_buffer, 0);
+  if (vkBeginCommandBuffer(current_frame.cmd_buffer, &cmd_begin_info) != VK_SUCCESS)
+    return "Failed to start recording command buffer";
+
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index],
+                                      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
+    return "Failed to transition swapchain image";
+
+  //draw_frame(current_frame.cmd_buffer, m_image_views[image_index]);
+
+  if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[image_index],
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
+    return "Failed to transition swapchain image";
+
+  if (vkEndCommandBuffer(current_frame.cmd_buffer) != VK_SUCCESS)
+    return "Failed to finish recording command buffer";
+
+  VkPipelineStageFlags submit_pipeline_wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSubmitInfo submit_info{
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &current_frame.sm_image_available,
+      .pWaitDstStageMask = &submit_pipeline_wait_stage,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &current_frame.cmd_buffer,
+      .signalSemaphoreCount = 1,
+      .pSignalSemaphores = &m_render_done_semaphores[image_index],
+  };
+
+  vkResetFences(m_core->get_device(), 1, &current_frame.fen_in_flight);
+  if (vkQueueSubmit(m_core->get_queue_graphics(), 1, &submit_info, current_frame.fen_in_flight) != VK_SUCCESS)
+    return "Failed to submit frame command buffer";
+
+  VkPresentInfoKHR present_info{
+      .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &m_render_done_semaphores[image_index],
+      .swapchainCount = 1,
+      .pSwapchains = &m_swapchain,
+      .pImageIndices = &image_index,
+  };
+
+  switch (vkQueuePresentKHR(m_core->get_queue_present(), &present_info))
+  {
+  case VK_ERROR_OUT_OF_DATE_KHR:
+  case VK_SUBOPTIMAL_KHR:
+    PROPAGATE_RESULT_ERROR(recreate());
+    break;
+
+  case VK_SUCCESS:
+    break;
+
+  default:
+    return "Failed to present swapchain";
+  }
+
+  if (m_is_out_of_date)
+    PROPAGATE_RESULT_ERROR(recreate());
+
+  m_current_frame_index = (m_current_frame_index + 1) % NUM_CONCURRENT_FRAMES;
+
+  return Ok();
 }
 
 Result<> Swapchain::recreate()
