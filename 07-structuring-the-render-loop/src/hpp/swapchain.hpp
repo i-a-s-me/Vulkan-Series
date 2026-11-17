@@ -17,12 +17,14 @@ class Swapchain
   };
 
   public:
-  static Result<Box<Swapchain>> create(const VulkanCore *core);
+  static Result<Box<Swapchain>> create(const VulkanCore *core, VkExtent2D initial_extent);
 
   Swapchain(const Swapchain &) = delete;
   Swapchain &operator=(const Swapchain &) = delete;
 
   ~Swapchain();
+
+  Result<> recreate();
 
   private:
   Swapchain(const VulkanCore *core) : m_core(core)

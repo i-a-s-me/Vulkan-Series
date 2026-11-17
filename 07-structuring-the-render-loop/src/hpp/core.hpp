@@ -19,8 +19,50 @@ class VulkanCore
 
   ~VulkanCore();
 
-  VkDevice get_device() const { return m_device; }
-  VmaAllocator get_allocator() const { return m_allocator; }
+  VkDevice get_device() const
+  {
+    return m_device;
+  }
+
+  VkSurfaceKHR get_surface() const
+  {
+    return m_surface;
+  }
+
+  VkPhysicalDevice get_physical_device() const
+  {
+    return m_physical_device;
+  }
+
+  VmaAllocator get_allocator() const
+  {
+    return m_allocator;
+  }
+
+  uint32_t get_queue_family_index_graphics() const
+  {
+    return m_graphics_queue_family_index;
+  }
+
+  uint32_t get_queue_family_index_present() const
+  {
+    return m_present_queue_family_index;
+  }
+
+  VkQueue get_queue_graphics() const
+  {
+    return m_graphics_queue;
+  }
+
+  VkQueue get_queue_present() const
+  {
+    return m_present_queue;
+  }
+
+  void wait_idle() const
+  {
+    vkDeviceWaitIdle(m_device);
+  }
 
   private:
   VulkanCore() = default;

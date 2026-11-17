@@ -47,6 +47,17 @@
       return result.get_error();                                                                                       \
   }
 
+template<typename ElementT, typename FuncT, typename... Args> std::vector<ElementT> vkEnumCall(FuncT f, Args... args)
+{
+  uint32_t _count{};
+  f(args..., &_count, nullptr);
+
+  std::vector<ElementT> result(_count);
+  f(args..., &_count, result.data());
+
+  return result;
+}
+
 struct Ok
 {
 };

@@ -635,17 +635,7 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
 bool Renderer::create_device_and_swapchain()
 {
 
-  const auto surface_formats =
-      vkEnumCall<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, m_physical_device, m_surface);
-  const auto surface_present_modes =
-      vkEnumCall<VkPresentModeKHR>(vkGetPhysicalDeviceSurfacePresentModesKHR, m_physical_device, m_surface);
-  assert(surface_formats.size());
-  assert(surface_present_modes.size());
-  m_swapchain_format = surface_formats[0];
-  m_swapchain_present_mode = (std::find(surface_present_modes.begin(), surface_present_modes.end(),
-                                        VK_PRESENT_MODE_MAILBOX_KHR) != surface_present_modes.end())
-                                 ? VK_PRESENT_MODE_MAILBOX_KHR
-                                 : VK_PRESENT_MODE_FIFO_KHR;
+  
 
   return recreate_swapchain();
 }
@@ -700,130 +690,7 @@ bool Renderer::create_frame_resources()
   return true;
 }
 
-bool Renderer::recreate_swapchain()
-{
-  vkDeviceWaitIdle(m_device);
-
-  VkSurfaceCapabilitiesKHR surface_caps{};
-  if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, m_surface, &surface_caps) != VK_SUCCESS)
-  {
-    printf("Failed to query physical device surface caps\n");
-    return false;
-  }
-
-  // A minimized window has a 0x0 surface, and a 0x0 swapchain is not allowed. So we
-  // keep the current swapchain, and try again later (once the window is restored).
-  if ((surface_caps.maxImageExtent.width == 0) || (surface_caps.maxImageExtent.height == 0))
-  {
-    m_swapchain_is_out_of_date = true;
-    return true;
-  }
-
-  m_swapchain_image_count = std::min(surface_caps.minImageCount + 1,
-                                     (surface_caps.maxImageCount == 0) ? UINT32_MAX : surface_caps.maxImageCount);
-
-  m_swapchain_pre_transform = surface_caps.currentTransform;
-
-  m_pending_swapchain_extent.width = std::clamp(m_pending_swapchain_extent.width, surface_caps.minImageExtent.width,
-                                                surface_caps.maxImageExtent.width);
-  m_pending_swapchain_extent.height = std::clamp(m_pending_swapchain_extent.height, surface_caps.minImageExtent.height,
-                                                 surface_caps.maxImageExtent.height);
-  m_swapchain_extent = m_pending_swapchain_extent;
-
-  m_depth_attachment.reset();
-  for (const auto &view : m_swapchain_image_views)
-    vkDestroyImageView(m_device, view, nullptr);
-  if (m_swapchain)
-    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-  m_swapchain_image_views.clear();
-  m_swapchain = VK_NULL_HANDLE;
-
-  VkSwapchainCreateInfoKHR swapchain_create_info{
-      .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-      .surface = m_surface,
-      .minImageCount = m_swapchain_image_count,
-      .imageFormat = m_swapchain_format.format,
-      .imageColorSpace = m_swapchain_format.colorSpace,
-      .imageExtent = m_swapchain_extent,
-      .imageArrayLayers = 1,
-      .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-      .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .preTransform = m_swapchain_pre_transform,
-      .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-      .presentMode = m_swapchain_present_mode,
-      .clipped = VK_TRUE,
-  };
-
-  uint32_t queue_family_indices[] = {m_graphics_queue_family_index, m_present_queue_family_index};
-  if (m_graphics_queue_family_index != m_present_queue_family_index)
-  {
-    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-    swapchain_create_info.queueFamilyIndexCount = 2;
-    swapchain_create_info.pQueueFamilyIndices = queue_family_indices;
-  }
-
-  if (vkCreateSwapchainKHR(m_device, &swapchain_create_info, nullptr, &m_swapchain) != VK_SUCCESS)
-  {
-    printf("Failed to create swapchain\n");
-    return false;
-  }
-
-  m_swapchain_images = vkEnumCall<VkImage>(vkGetSwapchainImagesKHR, m_device, m_swapchain);
-
-  // Note that we use the *actual* number of images here, which can be
-  // more than the minImageCount we asked for.
-  for (auto semaphore : m_render_done_semaphores)
-    vkDestroySemaphore(m_device, semaphore, nullptr);
-  m_render_done_semaphores.assign(m_swapchain_images.size(), VK_NULL_HANDLE);
-
-  VkSemaphoreCreateInfo semaphore_create_info{
-      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-  };
-  for (auto &semaphore : m_render_done_semaphores)
-  {
-    if (vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &semaphore) != VK_SUCCESS)
-    {
-      printf("Failed to create a semaphore\n");
-      return false;
-    }
-  }
-
-  m_swapchain_image_views.reserve(m_swapchain_images.size());
-  for (const auto &image : m_swapchain_images)
-  {
-    VkImageViewCreateInfo create_info{
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = m_swapchain_format.format,
-        .components =
-            {
-                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-            },
-        .subresourceRange =
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1,
-            },
-    };
-
-    VkImageView view{};
-    if (vkCreateImageView(m_device, &create_info, nullptr, &view) != VK_SUCCESS)
-    {
-      printf("Failed to create a swapchain image view\n");
-      return false;
-    }
-
-    m_swapchain_image_views.push_back(view);
-  }
-
-  CHECK_RESULT(Image::create(m_device, m_allocator, VK_FORMAT_D32_SFLOAT, m_swapchain_extent,
+  CHECK_RESULT(Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_D32_SFLOAT, m_extent,
                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
                m_depth_attachment);
   if (!execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
@@ -834,11 +701,7 @@ bool Renderer::recreate_swapchain()
       }))
     return false;
 
-  g_vertex_uniform_data.projection = glm::perspective(
-      glm::half_pi<float>(), (float) m_swapchain_extent.width / (float) m_swapchain_extent.height, 0.1f, 1.0f);
+      g_vertex_uniform_data.projection = glm::perspective(
+      glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
   g_vertex_uniform_data.projection[1][1] *= -1.0f;
-
-  m_swapchain_is_out_of_date = false;
-
-  return true;
-}
+  

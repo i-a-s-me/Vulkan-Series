@@ -3,17 +3,6 @@
 
 #include <core.hpp>
 
-template<typename ElementT, typename FuncT, typename... Args> std::vector<ElementT> vkEnumCall(FuncT f, Args... args)
-{
-  uint32_t _count{};
-  f(args..., &_count, nullptr);
-
-  std::vector<ElementT> result(_count);
-  f(args..., &_count, result.data());
-
-  return result;
-}
-
 Result<Box<VulkanCore>> VulkanCore::create(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
     uint32_t &initial_surface_width, uint32_t &initial_surface_height)
