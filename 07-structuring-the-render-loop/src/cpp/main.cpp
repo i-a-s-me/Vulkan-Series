@@ -41,7 +41,7 @@ int SampleApp::launch(int argc, char *argv[])
   }
 
   m_vulkan = Box<Renderer>(new Renderer());
-  if (!m_vulkan->initialize([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
+  if (m_vulkan->initialize([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
                                                 VkSurfaceKHR &out_surface) -> bool {
         if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
         {
@@ -61,7 +61,7 @@ int SampleApp::launch(int argc, char *argv[])
         out_height = (uint32_t) fb_height;
 
         return true;
-      }))
+      }).is_error())
   {
     printf("Failed to initialize Vulkan\n");
     return -1;
@@ -93,7 +93,7 @@ int SampleApp::launch(int argc, char *argv[])
       continue;
     }
 
-    if (!m_vulkan->render())
+    if (m_vulkan->render().is_error())
       break;
   }
 

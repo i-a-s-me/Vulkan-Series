@@ -7,8 +7,8 @@
 #include "buffer.hpp"
 #include "pipeline.hpp"
 
-class VulkanCore;
-class Swapchain;
+#include <core.hpp>
+#include <swapchain.hpp>
 
 class Renderer
 {

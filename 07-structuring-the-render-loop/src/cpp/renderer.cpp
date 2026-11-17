@@ -1,9 +1,7 @@
 // Released into the public domain.
 // Written by I-A-S for use in i-a-s.me vulkan series.
 
-#include <core.hpp>
 #include <renderer.hpp>
-#include <swapchain.hpp>
 
 #include <fstream>
 
@@ -104,6 +102,11 @@ Renderer::~Renderer()
 Result<> Renderer::initialize(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
+  VkExtent2D inital_extent{};
+
+  CHECK_RESULT(VulkanCore::create(surface_creation_callback, inital_extent), m_core);
+
+  CHECK_RESULT(Swapchain::create(m_core.get(), inital_extent), m_swapchain);
 
   CHECK_RESULT(ShaderDataTable::create(m_core->get_device(),
                                        std::initializer_list<ShaderDataTable::EntryDescription>{
@@ -271,7 +274,7 @@ Result<> Renderer::initialize(
 
   if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler))
     return "Failed to write texture image to shader data table";
-  
+
   m_shader_data_table->flush_writes();
 
   return Ok();
@@ -295,6 +298,9 @@ Result<> Renderer::render()
   VkCommandBuffer cmd;
   CHECK_RESULT(m_swapchain->begin_frame(), cmd);
 
+  if (cmd == VK_NULL_HANDLE)
+    return Ok();
+
   m_graphics_pipeline->bind(cmd);
 
   m_vertex_buffer->bind(cmd);
@@ -305,6 +311,13 @@ Result<> Renderer::render()
   vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
 
   PROPAGATE_RESULT_ERROR(m_swapchain->end_frame());
+
+  return Ok();
+}
+
+void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
+{
+  m_swapchain->resize(fb_width, fb_height);
 }
 
 /*

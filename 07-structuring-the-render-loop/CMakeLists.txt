@@ -35,11 +35,13 @@ FetchContent_MakeAvailable(glfw VulkanMemoryAllocator glm)
 
 add_executable(App
     src/cpp/vma.cpp
+    src/cpp/core.cpp
     src/cpp/main.cpp
     src/cpp/image.cpp
     src/cpp/buffer.cpp
     src/cpp/pipeline.cpp
     src/cpp/renderer.cpp
+    src/cpp/swapchain.cpp
     src/cpp/shader_data_table.cpp
 )
 

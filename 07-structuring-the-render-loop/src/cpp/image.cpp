@@ -85,7 +85,7 @@ bool Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize si
   {
     m_staging_buffer.reset();
 
-    CHECK_RESULT(Buffer::create(m_allocator, size, Buffer::EUsage::STAGING), m_staging_buffer);
+    CHECK_RESULT_2(Buffer::create(m_allocator, size, Buffer::EUsage::STAGING), m_staging_buffer);
   }
 
   if (!m_staging_buffer->copy_from_cpu(data, size))
