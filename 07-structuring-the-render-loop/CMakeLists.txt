@@ -55,3 +55,5 @@ target_link_libraries(App PRIVATE
 target_include_directories(App PRIVATE
     src/hpp
 )
+
+target_precompile_headers(App PRIVATE src/hpp/pch.hpp)

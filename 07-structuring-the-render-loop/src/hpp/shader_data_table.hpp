@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "image.hpp"
+#include <image.hpp>
 
 class Pipeline;
 

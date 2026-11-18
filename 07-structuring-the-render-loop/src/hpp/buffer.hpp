@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include <pch.hpp>
 
 class Buffer
 {

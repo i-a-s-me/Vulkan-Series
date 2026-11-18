@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "buffer.hpp"
+#include <buffer.hpp>
 
 class Image
 {

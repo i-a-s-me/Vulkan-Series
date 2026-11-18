@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "shader_data_table.hpp"
+#include <shader_data_table.hpp>
 
 class Pipeline
 {
