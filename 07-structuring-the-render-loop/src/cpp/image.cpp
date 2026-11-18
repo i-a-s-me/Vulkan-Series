@@ -77,7 +77,7 @@ bool Image::transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout)
   return false;
 }
 
-bool Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize size)
+Result<> Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize size)
 {
   assert(m_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -85,11 +85,11 @@ bool Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize si
   {
     m_staging_buffer.reset();
 
-    CHECK_RESULT_2(Buffer::create(m_allocator, size, Buffer::EUsage::STAGING), m_staging_buffer);
+    CHECK_RESULT(Buffer::create(m_allocator, size, Buffer::EUsage::STAGING), m_staging_buffer);
   }
 
   if (!m_staging_buffer->copy_from_cpu(data, size))
-    return false;
+    return "Failed to copy data to the staging buffer";
 
   VkBufferImageCopy region{
       .bufferOffset = 0,
@@ -108,7 +108,7 @@ bool Image::copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize si
   vkCmdCopyBufferToImage(cmd, m_staging_buffer->get_handle(), m_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                          &region);
 
-  return true;
+  return Ok();
 }
 
 bool Image::transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout,

@@ -109,7 +109,7 @@ Result<> Renderer::initialize(
   CHECK_RESULT(Swapchain::create(m_core.get(), inital_extent), m_swapchain);
 
   on_swapchain_resize(inital_extent);
-  
+
   m_swapchain->register_resize_callback([this](VkExtent2D extent) { this->on_swapchain_resize(extent); });
 
   CHECK_RESULT(ShaderDataTable::create(m_core->get_device(),
@@ -260,8 +260,7 @@ Result<> Renderer::initialize(
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
 
-      if (!m_texture_image->copy_from_cpu(cmd, pixels.data(), pixels.size()))
-        return "Failed to copy pixels to texture image";
+      PROPAGATE_RESULT_ERROR(m_texture_image->copy_from_cpu(cmd, pixels.data(), pixels.size()));
 
       if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";

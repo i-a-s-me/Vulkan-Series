@@ -27,7 +27,7 @@ class Image
 
   // make sure the image is in VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL layout before
   // calling this function
-  bool copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize size);
+  Result<> copy_from_cpu(VkCommandBuffer cmd, const void *data, VkDeviceSize size);
 
   VkImageView get_view() const
   {
