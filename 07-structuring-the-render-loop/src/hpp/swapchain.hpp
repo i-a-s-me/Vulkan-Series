@@ -24,13 +24,18 @@ class Swapchain
 
   ~Swapchain();
 
-  void resize(uint32_t fb_width, uint32_t fb_height);
+  void resize(uint32_t width, uint32_t height);
   void request_recreation();
 
   Result<VkCommandBuffer> begin_frame();
   Result<> end_frame();
 
   public:
+  void register_resize_callback(std::function<void(VkExtent2D extent)> resize_callback)
+  {
+    m_resize_callback = resize_callback;
+  }
+
   VkFormat get_color_format() const
   {
     return m_format.format;
@@ -48,7 +53,7 @@ class Swapchain
 
   float get_aspect_ratio() const
   {
-    return (float)m_extent.width / (float)m_extent.height;
+    return (float) m_extent.width / (float) m_extent.height;
   }
 
   private:
@@ -82,4 +87,6 @@ class Swapchain
 
   VkExtent2D m_extent{1, 1};
   VkExtent2D m_pending_extent{1, 1};
+
+  std::function<void(VkExtent2D extent)> m_resize_callback{};
 };

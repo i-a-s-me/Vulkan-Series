@@ -108,6 +108,10 @@ Result<> Renderer::initialize(
 
   CHECK_RESULT(Swapchain::create(m_core.get(), inital_extent), m_swapchain);
 
+  on_swapchain_resize(inital_extent);
+  
+  m_swapchain->register_resize_callback([this](VkExtent2D extent) { this->on_swapchain_resize(extent); });
+
   CHECK_RESULT(ShaderDataTable::create(m_core->get_device(),
                                        std::initializer_list<ShaderDataTable::EntryDescription>{
                                            {
@@ -169,9 +173,6 @@ Result<> Renderer::initialize(
     g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     g_vertex_uniform_data.view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    g_vertex_uniform_data.projection =
-        glm::perspective(glm::half_pi<float>(), m_swapchain->get_aspect_ratio(), 0.1f, 1.0f);
-    g_vertex_uniform_data.projection[1][1] *= -1.0f;
 
     if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
       return "Failed to copy data to uniform buffer";
@@ -320,8 +321,9 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
   m_swapchain->resize(fb_width, fb_height);
 }
 
-/*
-g_vertex_uniform_data.projection =
-    glm::perspective(glm::half_pi<float>(), (float) m_extent.width / (float) m_extent.height, 0.1f, 1.0f);
-g_vertex_uniform_data.projection[1][1] *= -1.0f;
-*/
+void Renderer::on_swapchain_resize(VkExtent2D extent)
+{
+  g_vertex_uniform_data.projection =
+      glm::perspective(glm::half_pi<float>(), (float) extent.width / (float) extent.height, 0.1f, 1.0f);
+  g_vertex_uniform_data.projection[1][1] *= -1.0f;
+}

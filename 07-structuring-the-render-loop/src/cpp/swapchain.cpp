@@ -52,9 +52,9 @@ Swapchain::~Swapchain()
   vkDestroySwapchainKHR(m_core->get_device(), m_swapchain, nullptr);
 }
 
-void Swapchain::resize(uint32_t fb_width, uint32_t fb_height)
+void Swapchain::resize(uint32_t width, uint32_t height)
 {
-  m_pending_extent = {fb_width, fb_height};
+  m_pending_extent = {width, height};
   request_recreation();
 }
 
@@ -225,6 +225,8 @@ Result<> Swapchain::recreate()
 {
   m_core->wait_idle();
 
+  bool resized = false;
+
   VkSurfaceCapabilitiesKHR surface_caps{};
   if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_core->get_physical_device(), m_core->get_surface(), &surface_caps) !=
       VK_SUCCESS)
@@ -247,6 +249,7 @@ Result<> Swapchain::recreate()
       std::clamp(m_pending_extent.width, surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width);
   m_pending_extent.height =
       std::clamp(m_pending_extent.height, surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
+  resized = (m_extent.width != m_pending_extent.width) || (m_extent.height != m_pending_extent.height);  
   m_extent = m_pending_extent;
 
   m_depth_image.reset();
@@ -351,6 +354,9 @@ Result<> Swapchain::recreate()
   }
 
   m_is_out_of_date = false;
+
+  if (m_resize_callback && resized)
+    m_resize_callback(m_extent);
 
   return Ok();
 }

@@ -25,6 +25,9 @@ class Renderer
 
   void resize(uint32_t fb_width, uint32_t fb_height);
 
+private:
+  void on_swapchain_resize(VkExtent2D extent);
+
   private:
   Box<VulkanCore> m_core{};
   Box<Swapchain> m_swapchain{};
