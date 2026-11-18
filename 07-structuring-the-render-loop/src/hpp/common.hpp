@@ -30,32 +30,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define CHECK_RESULT_2(_result, _var)                                                                                    \
-  {                                                                                                                    \
-    auto result = _result;                                                                                             \
-    if (result.is_error())                                                                                             \
-    {                                                                                                                  \
-      printf("%s\n", result.get_error().c_str());                                                                      \
-      return false;                                                                                                    \
-    }                                                                                                                  \
-    _var = std::move(result).take_value();                                                                             \
-  }
-
-#define CHECK_RESULT(_result, _var)                                                                                  \
-  {                                                                                                                    \
-    auto result = _result;                                                                                             \
-    if (result.is_error())                                                                                             \
-    {                                                                                                                  \
-      return result.get_error();                                                                                       \
-    }                                                                                                                  \
-    _var = std::move(result).take_value();                                                                             \
-  }
-
-#define PROPAGATE_RESULT_ERROR(_result)                                                                                \
+#define CHECK_RESULT(_result)                                                                                          \
   {                                                                                                                    \
     const auto result = _result;                                                                                       \
     if (result.is_error())                                                                                             \
       return result.get_error();                                                                                       \
+  }
+
+#define CHECK_ASSIGN_RESULT(_result, _var)                                                                             \
+  {                                                                                                                    \
+    auto result = _result;                                                                                             \
+    if (result.is_error())                                                                                             \
+      return result.get_error();                                                                                       \
+    _var = std::move(result).take_value();                                                                             \
   }
 
 template<typename ElementT, typename FuncT, typename... Args> std::vector<ElementT> vkEnumCall(FuncT f, Args... args)

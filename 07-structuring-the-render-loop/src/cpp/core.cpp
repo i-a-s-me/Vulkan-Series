@@ -9,15 +9,15 @@ Result<Box<VulkanCore>> VulkanCore::create(
 {
   Box<VulkanCore> core(new VulkanCore());
 
-  PROPAGATE_RESULT_ERROR(core->create_instance());
+  CHECK_RESULT(core->create_instance());
 
   if (!surface_creation_callback(core->m_instance, initial_surface_extent.width, initial_surface_extent.height, core->m_surface))
     return "Failed to create Vulkan surface";
 
-  PROPAGATE_RESULT_ERROR(core->select_physical_device());
-  PROPAGATE_RESULT_ERROR(core->create_device());
-  PROPAGATE_RESULT_ERROR(core->create_allocator());
-  PROPAGATE_RESULT_ERROR(core->initialize_single_shot_commands());
+  CHECK_RESULT(core->select_physical_device());
+  CHECK_RESULT(core->create_device());
+  CHECK_RESULT(core->create_allocator());
+  CHECK_RESULT(core->initialize_single_shot_commands());
 
   return core;
 }
@@ -64,7 +64,7 @@ Result<> VulkanCore::execute_single_shot_commands(std::function<Result<>(VkComma
   if (vkBeginCommandBuffer(m_single_shot_command_buffer, &begin_info) != VK_SUCCESS)
     return "Failed to begin single shot command buffer";
 
-  PROPAGATE_RESULT_ERROR(commands(m_single_shot_command_buffer));
+  CHECK_RESULT(commands(m_single_shot_command_buffer));
 
   if (vkEndCommandBuffer(m_single_shot_command_buffer) != VK_SUCCESS)
     return "Failed to end single shot command buffer";

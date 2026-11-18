@@ -22,8 +22,8 @@ Result<Box<Swapchain>> Swapchain::create(const VulkanCore *core, VkExtent2D init
 
   swapchain->m_pending_extent = initial_extent;
 
-  PROPAGATE_RESULT_ERROR(swapchain->recreate());
-  PROPAGATE_RESULT_ERROR(swapchain->create_frame_resources());
+  CHECK_RESULT(swapchain->recreate());
+  CHECK_RESULT(swapchain->create_frame_resources());
 
   return swapchain;
 }
@@ -73,7 +73,7 @@ Result<VkCommandBuffer> Swapchain::begin_frame()
                                 VK_NULL_HANDLE, &m_current_image_index))
   {
   case VK_ERROR_OUT_OF_DATE_KHR:
-    PROPAGATE_RESULT_ERROR(recreate());
+    CHECK_RESULT(recreate());
     return (VkCommandBuffer)VK_NULL_HANDLE;
 
   case VK_SUCCESS:
@@ -203,7 +203,7 @@ Result<> Swapchain::end_frame()
   {
   case VK_ERROR_OUT_OF_DATE_KHR:
   case VK_SUBOPTIMAL_KHR:
-    PROPAGATE_RESULT_ERROR(recreate());
+    CHECK_RESULT(recreate());
     break;
 
   case VK_SUCCESS:
@@ -214,7 +214,7 @@ Result<> Swapchain::end_frame()
   }
 
   if (m_is_out_of_date)
-    PROPAGATE_RESULT_ERROR(recreate());
+    CHECK_RESULT(recreate());
 
   m_current_frame_index = (m_current_frame_index + 1) % NUM_CONCURRENT_FRAMES;
 
@@ -345,7 +345,7 @@ Result<> Swapchain::recreate()
 
     m_depth_image = std::move(result).take_value();
 
-    PROPAGATE_RESULT_ERROR(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    CHECK_RESULT(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       if (!m_depth_image->transition_layout(cmd, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL))
         return "Failed to transition depth image layout";
 
