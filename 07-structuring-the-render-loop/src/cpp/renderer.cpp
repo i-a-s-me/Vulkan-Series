@@ -27,13 +27,10 @@ Result<Box<Renderer>> Renderer::create(
   VkExtent2D inital_extent{};
 
   CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, inital_extent), renderer->m_core);
-
   CHECK_ASSIGN_RESULT(Swapchain::create(renderer->m_core.get(), inital_extent), renderer->m_swapchain);
-
-  renderer->on_swapchain_resize(inital_extent);
-
+  renderer->on_swapchain_resize();
   renderer->m_swapchain->register_resize_callback(
-      [renderer = renderer.get()](VkExtent2D extent) { renderer->on_swapchain_resize(extent); });
+      [renderer = renderer.get()](VkExtent2D) { renderer->on_swapchain_resize(); });
 
   CHECK_ASSIGN_RESULT(ShaderDataTable::create(renderer->m_core->get_device(),
                                               std::initializer_list<ShaderDataTable::EntryDescription>{
@@ -274,9 +271,9 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
   m_swapchain->resize(fb_width, fb_height);
 }
 
-void Renderer::on_swapchain_resize(VkExtent2D extent)
+void Renderer::on_swapchain_resize()
 {
   m_vertex_uniform_data.projection =
-      glm::perspective(glm::half_pi<float>(), (float) extent.width / (float) extent.height, 0.1f, 1.0f);
+      glm::perspective(glm::half_pi<float>(), m_swapchain->get_aspect_ratio(), 0.1f, 1.0f);
   m_vertex_uniform_data.projection[1][1] *= -1.0f;
 }

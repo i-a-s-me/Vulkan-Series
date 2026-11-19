@@ -28,7 +28,7 @@ class Renderer
   private:
   Renderer() = default;
 
-  void on_swapchain_resize(VkExtent2D extent);
+  void on_swapchain_resize();
 
   private:
   Box<VulkanCore> m_core{};
