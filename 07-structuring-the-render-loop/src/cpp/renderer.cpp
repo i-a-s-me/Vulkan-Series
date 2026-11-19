@@ -16,7 +16,7 @@ static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &pa
   f.seekg(SEEK_SET);
   f.read((char *) data.data(), data.size() << 2);
 
-  return std::move(data);
+  return data;
 }
 
 Result<Box<Renderer>> Renderer::create(
