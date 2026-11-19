@@ -21,6 +21,8 @@ class Image
                                    VkImageUsageFlags usage);
 
   Image(const Image &) = delete;
+  Image &operator=(const Image &) = delete;
+
   ~Image();
 
   bool transition_layout(VkCommandBuffer cmd, VkImageLayout new_layout);

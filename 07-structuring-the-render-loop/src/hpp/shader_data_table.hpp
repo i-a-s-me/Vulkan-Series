@@ -24,6 +24,8 @@ class ShaderDataTable
   static Result<Box<ShaderDataTable>> create(VkDevice device, std::span<const EntryDescription> entries);
 
   ShaderDataTable(const ShaderDataTable &) = delete;
+  ShaderDataTable &operator=(const ShaderDataTable &) = delete;
+  
   ~ShaderDataTable();
 
   bool write_image_entry(const std::string &name, const Image *image, VkSampler sampler, uint32_t index = 0);
@@ -38,7 +40,7 @@ class ShaderDataTable
     return m_pipeline_layout;
   }
 
-  protected:
+  private:
   ShaderDataTable(VkDevice device) : m_device(device)
   {
   }

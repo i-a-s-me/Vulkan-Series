@@ -16,11 +16,13 @@ class Pipeline
                                       std::span<const uint32_t> fragment_shader_source);
 
   Pipeline(const Pipeline &) = delete;
+  Pipeline &operator=(const Pipeline &) = delete;
+
   ~Pipeline();
 
   void bind(VkCommandBuffer cmd);
 
-  protected:
+  private:
   Pipeline(VkDevice device) : m_device(device)
   {
   }

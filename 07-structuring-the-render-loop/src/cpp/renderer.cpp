@@ -24,10 +24,10 @@ Result<Box<Renderer>> Renderer::create(
 {
   Box<Renderer> renderer(new Renderer());
 
-  VkExtent2D inital_extent{};
+  VkExtent2D initial_extent{};
 
-  CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, inital_extent), renderer->m_core);
-  CHECK_ASSIGN_RESULT(Swapchain::create(renderer->m_core.get(), inital_extent), renderer->m_swapchain);
+  CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, initial_extent), renderer->m_core);
+  CHECK_ASSIGN_RESULT(Swapchain::create(renderer->m_core.get(), initial_extent), renderer->m_swapchain);
   renderer->on_swapchain_resize();
   renderer->m_swapchain->register_resize_callback(
       [renderer = renderer.get()](VkExtent2D) { renderer->on_swapchain_resize(); });

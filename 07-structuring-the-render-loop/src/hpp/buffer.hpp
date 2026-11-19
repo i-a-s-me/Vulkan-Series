@@ -20,6 +20,8 @@ class Buffer
   static Result<Box<Buffer>> create(VmaAllocator allocator, VkDeviceSize size, EUsage usage);
 
   Buffer(const Buffer &) = delete;
+  Buffer &operator=(const Buffer &) = delete;
+
   ~Buffer();
 
   void bind(VkCommandBuffer cmd);
