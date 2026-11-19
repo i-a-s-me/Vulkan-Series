@@ -136,28 +136,31 @@ bool ShaderDataTable::write_image_entry(const std::string &name, uint32_t frame_
   return true;
 }
 
-bool ShaderDataTable::write_buffer_entry(const std::string &name, uint32_t frame_index, const Buffer *buffer,
-                                         VkDeviceSize offset, VkDeviceSize size, uint32_t index)
+bool ShaderDataTable::write_uniform_buffer_entry(const std::string &name, const IUniformBuffer *buffer,
+                                                 VkDeviceSize offset, VkDeviceSize size, uint32_t index)
 {
   const auto entry = m_entry_map.find(name);
   if (entry == m_entry_map.end())
     return false;
 
-  m_queued_write_buffer_infos.push_back(VkDescriptorBufferInfo{
-      buffer->get_handle(),
-      offset,
-      (size == 0) ? buffer->get_size() : size,
-  });
+  for (uint32_t i = 0; i < buffer->get_frame_count(); i++)
+  {
+    m_queued_write_buffer_infos.push_back(VkDescriptorBufferInfo{
+        buffer->get_handle(i),
+        offset,
+        (size == 0) ? buffer->get_size() : size,
+    });
 
-  m_queued_writes.push_back({
-      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = m_sets[(frame_index * m_sets_per_frame) + entry->second.first],
-      .dstBinding = entry->second.second,
-      .dstArrayElement = index,
-      .descriptorCount = 1,
-      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // for now we assume all writes are uniform buffers
-      .pBufferInfo = &m_queued_write_buffer_infos.back(),
-  });
+    m_queued_writes.push_back({
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = m_sets[(i * m_sets_per_frame) + entry->second.first],
+        .dstBinding = entry->second.second,
+        .dstArrayElement = index,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &m_queued_write_buffer_infos.back(),
+    });
+  }
 
   return true;
 }

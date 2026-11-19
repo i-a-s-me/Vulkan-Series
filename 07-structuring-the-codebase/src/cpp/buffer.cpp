@@ -25,14 +25,6 @@ Result<Box<Buffer>> Buffer::create(VmaAllocator allocator, VkDeviceSize size, EU
     _usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     break;
 
-  case EUsage::UNIFORM:
-    // uniform buffer
-    _usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-    // allow writing to this buffer from CPU memory
-    _mem_flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-    break;
-
   case EUsage::STAGING:
     // allows transferring data out from this buffer (for copying)
     _usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -84,8 +76,7 @@ void Buffer::bind(VkCommandBuffer cmd)
     vkCmdBindIndexBuffer(cmd, m_handle, 0, VK_INDEX_TYPE_UINT32);
     break;
 
-  // we shouldn't call bind on a staging or uniform buffer
-  case EUsage::UNIFORM:
+  // we shouldn't call bind on a staging buffer
   case EUsage::STAGING:
     assert(false);
     break;
@@ -94,7 +85,7 @@ void Buffer::bind(VkCommandBuffer cmd)
 
 bool Buffer::copy_from_cpu(const void *data, VkDeviceSize size)
 {
-  assert((m_usage == EUsage::STAGING) || (m_usage == EUsage::UNIFORM));
+  assert(m_usage == EUsage::STAGING);
 
   return vmaCopyMemoryToAllocation(m_allocator, data, m_allocation, 0, size) == VK_SUCCESS;
 }

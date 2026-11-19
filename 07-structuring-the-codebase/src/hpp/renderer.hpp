@@ -47,6 +47,5 @@ class Renderer
 
   Box<ShaderDataTable> m_shader_data_table{};
 
-  VertexUniformData m_vertex_uniform_data{};
-  std::vector<Box<Buffer>> m_vertex_uniform_buffers{};
+  Box<UniformBuffer<VertexUniformData>> m_vertex_uniform{};
 };

@@ -31,8 +31,8 @@ class ShaderDataTable
 
   bool write_image_entry(const std::string &name, uint32_t frame_index, const Image *image, VkSampler sampler,
                          uint32_t index = 0);
-  bool write_buffer_entry(const std::string &name, uint32_t frame_index, const Buffer *buffer, VkDeviceSize offset = 0,
-                          VkDeviceSize size = 0, uint32_t index = 0);
+  bool write_uniform_buffer_entry(const std::string &name, const IUniformBuffer *buffer, VkDeviceSize offset = 0,
+                                  VkDeviceSize size = 0, uint32_t index = 0);
   void flush_writes();
 
   void bind(VkCommandBuffer cmd, uint32_t frame_index);

@@ -28,10 +28,10 @@ Result<Box<Renderer>> Renderer::create(
 
   CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, initial_extent), renderer->m_core);
   CHECK_ASSIGN_RESULT(Swapchain::create(renderer->m_core.get(), initial_extent), renderer->m_swapchain);
-  renderer->on_swapchain_resize();
   renderer->m_swapchain->register_resize_callback(
       [renderer = renderer.get()](VkExtent2D) { renderer->on_swapchain_resize(); });
   CHECK_RESULT(renderer->on_create());
+  renderer->on_swapchain_resize();
 
   return renderer;
 }
@@ -53,7 +53,7 @@ Renderer::~Renderer()
   m_vertex_buffer.reset();
   m_index_buffer.reset();
   m_staging_buffer.reset();
-  m_vertex_uniform_buffers.clear();
+  m_vertex_uniform.reset();
 }
 
 Result<> Renderer::on_create()
@@ -116,12 +116,9 @@ Result<> Renderer::on_create()
   CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(CUBE_MESH_INDICES), Buffer::EUsage::INDEX),
                       m_index_buffer);
 
-  m_vertex_uniform_buffers.resize(Swapchain::NUM_CONCURRENT_FRAMES);
-  for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
-  {
-    CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
-                        m_vertex_uniform_buffers[i]);
-  }
+  CHECK_ASSIGN_RESULT(
+      UniformBuffer<VertexUniformData>::create(m_core->get_allocator(), Swapchain::NUM_CONCURRENT_FRAMES),
+      m_vertex_uniform);
 
   { // copy VERTICES to vertex buffer
     if (!m_staging_buffer->copy_from_cpu(CUBE_MESH_VERTICES, sizeof(CUBE_MESH_VERTICES)))
@@ -215,11 +212,8 @@ Result<> Renderer::on_create()
     }));
   }
 
-  for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
-  {
-    if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", i, m_vertex_uniform_buffers[i].get()))
-      return "Failed to write uniform buffer to shader data table";
-  }
+  if (!m_shader_data_table->write_uniform_buffer_entry("vertex_uniform_data", m_vertex_uniform.get()))
+    return "Failed to write uniform buffer to shader data table";
 
   for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
   {
@@ -229,7 +223,7 @@ Result<> Renderer::on_create()
 
   m_shader_data_table->flush_writes();
 
-  m_vertex_uniform_data.view =
+  m_vertex_uniform->get_data().view =
       glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
   return Ok();
@@ -250,11 +244,12 @@ Result<> Renderer::render()
     const auto current_time = std::chrono::steady_clock::now();
     const auto seconds = std::chrono::duration<float>(current_time - start_time).count();
 
-    m_vertex_uniform_data.model =
+    m_vertex_uniform->get_data().model =
         glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f)) *
         glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
-    m_vertex_uniform_buffers[m_swapchain->get_current_frame_index()]->copy_from_cpu(&m_vertex_uniform_data,
-                                                                                    sizeof(m_vertex_uniform_data));
+
+    if (!m_vertex_uniform->flush(m_swapchain->get_current_frame_index()))
+      return "Failed to flush the uniform buffer";
   }
 
   VkRenderingAttachmentInfo color_attachment_info{
@@ -343,7 +338,10 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
 
 void Renderer::on_swapchain_resize()
 {
-  m_vertex_uniform_data.projection =
+  if (!m_vertex_uniform)
+    return;
+
+  m_vertex_uniform->get_data().projection =
       glm::perspective(glm::half_pi<float>(), m_swapchain->get_aspect_ratio(), 0.1f, 1.0f);
-  m_vertex_uniform_data.projection[1][1] *= -1.0f;
+  m_vertex_uniform->get_data().projection[1][1] *= -1.0f;
 }
