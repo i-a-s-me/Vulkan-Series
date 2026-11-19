@@ -79,15 +79,18 @@ Result<Box<Renderer>> Renderer::create(
 
   CHECK_ASSIGN_RESULT(
       Buffer::create(renderer->m_core->get_allocator(),
-                     std::max(sizeof(CUBE_MESH_VERTICES), sizeof(CUBE_MESH_INDICES)), // maximum size we'll need for our staging operations
+                     std::max(sizeof(CUBE_MESH_VERTICES),
+                              sizeof(CUBE_MESH_INDICES)), // maximum size we'll need for our staging operations
                      Buffer::EUsage::STAGING),
       renderer->m_staging_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_VERTICES), Buffer::EUsage::VERTEX),
-                      renderer->m_vertex_buffer);
+  CHECK_ASSIGN_RESULT(
+      Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_VERTICES), Buffer::EUsage::VERTEX),
+      renderer->m_vertex_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_INDICES), Buffer::EUsage::INDEX),
-                      renderer->m_index_buffer);
+  CHECK_ASSIGN_RESULT(
+      Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_INDICES), Buffer::EUsage::INDEX),
+      renderer->m_index_buffer);
 
   CHECK_ASSIGN_RESULT(
       Buffer::create(renderer->m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
@@ -98,7 +101,8 @@ Result<Box<Renderer>> Renderer::create(
     renderer->m_vertex_uniform_data.view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    if (!renderer->m_vertex_uniform_buffer->copy_from_cpu(&renderer->m_vertex_uniform_data, sizeof(m_vertex_uniform_data)))
+    if (!renderer->m_vertex_uniform_buffer->copy_from_cpu(&renderer->m_vertex_uniform_data,
+                                                          sizeof(m_vertex_uniform_data)))
       return "Failed to copy data to uniform buffer";
   }
 
@@ -252,6 +256,69 @@ Result<> Renderer::render()
     m_vertex_uniform_buffer->copy_from_cpu(&m_vertex_uniform_data, sizeof(m_vertex_uniform_data));
   }
 
+  VkRenderingAttachmentInfo color_attachment_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = m_swapchain->get_color_attachment(),
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue =
+          {
+              .color =
+                  {
+                      0.1f,
+                      0.1f,
+                      0.1f,
+                      1.0f,
+                  },
+          },
+  };
+
+  VkRenderingAttachmentInfo depth_attachment_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = m_swapchain->get_depth_attachment(),
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue =
+          {
+              .depthStencil =
+                  {
+                      1.0f,
+                      0,
+                  },
+          },
+  };
+
+  VkRenderingInfo rendering_info{
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .renderArea =
+          {
+              {},
+              m_swapchain->get_extent(),
+          },
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment_info,
+      .pDepthAttachment = &depth_attachment_info,
+  };
+
+  vkCmdBeginRendering(cmd, &rendering_info);
+
+  VkViewport viewport = {
+      .width = (float) m_swapchain->get_extent().width,
+      .height = (float) m_swapchain->get_extent().height,
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
+  };
+  vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+  VkRect2D scissor{
+      .extent = m_swapchain->get_extent(),
+  };
+  vkCmdSetScissor(cmd, 0, 1, &scissor);
+
   m_graphics_pipeline->bind(cmd);
 
   m_vertex_buffer->bind(cmd);
@@ -260,6 +327,8 @@ Result<> Renderer::render()
   m_shader_data_table->bind(cmd);
 
   vkCmdDrawIndexed(cmd, sizeof(CUBE_MESH_INDICES) / sizeof(CUBE_MESH_INDICES[0]), 1, 0, 0, 0);
+
+  vkCmdEndRendering(cmd);
 
   CHECK_RESULT(m_swapchain->end_frame());
 

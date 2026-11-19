@@ -9,8 +9,6 @@ class VulkanCore;
 
 class Swapchain
 {
-  static constexpr uint32_t NUM_CONCURRENT_FRAMES = 3;
-
   struct FrameResourceSet
   {
     VkFence fen_in_flight{};
@@ -19,6 +17,8 @@ class Swapchain
   };
 
   public:
+  static constexpr uint32_t NUM_CONCURRENT_FRAMES = 3;
+
   static Result<Box<Swapchain>> create(const VulkanCore *core, VkExtent2D initial_extent);
 
   Swapchain(const Swapchain &) = delete;
@@ -51,6 +51,21 @@ class Swapchain
   VkExtent2D get_extent() const
   {
     return m_extent;
+  }
+
+  uint32_t get_current_frame_index() const
+  {
+    return m_current_frame_index;
+  }
+
+  VkImageView get_color_attachment() const
+  {
+    return m_image_views[m_current_image_index];
+  }
+
+  VkImageView get_depth_attachment() const
+  {
+    return m_depth_image->get_view();
   }
 
   float get_aspect_ratio() const

@@ -95,77 +95,12 @@ Result<VkCommandBuffer> Swapchain::begin_frame()
                                       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL))
     return "Failed to transition swapchain image";
 
-  VkRenderingAttachmentInfo color_attachment_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = m_image_views[m_current_image_index],
-      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .clearValue =
-          {
-              .color =
-                  {
-                      0.1f,
-                      0.1f,
-                      0.1f,
-                      1.0f,
-                  },
-          },
-  };
-
-  VkRenderingAttachmentInfo depth_attachment_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = m_depth_image->get_view(),
-      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .clearValue =
-          {
-              .depthStencil =
-                  {
-                      1.0f,
-                      0,
-                  },
-          },
-  };
-
-  VkRenderingInfo rendering_info{
-      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-      .renderArea =
-          {
-              {},
-              m_extent,
-          },
-      .layerCount = 1,
-      .viewMask = 0,
-      .colorAttachmentCount = 1,
-      .pColorAttachments = &color_attachment_info,
-      .pDepthAttachment = &depth_attachment_info,
-  };
-
-  vkCmdBeginRendering(current_frame.cmd_buffer, &rendering_info);
-
-  VkViewport viewport = {
-      .width = (float) m_extent.width,
-      .height = (float) m_extent.height,
-      .minDepth = 0.0f,
-      .maxDepth = 1.0f,
-  };
-  vkCmdSetViewport(current_frame.cmd_buffer, 0, 1, &viewport);
-
-  VkRect2D scissor{
-      .extent = m_extent,
-  };
-  vkCmdSetScissor(current_frame.cmd_buffer, 0, 1, &scissor);
-
   return (VkCommandBuffer)current_frame.cmd_buffer;
 }
 
 Result<> Swapchain::end_frame()
 {
   const auto &current_frame = m_frames[m_current_frame_index];
-
-  vkCmdEndRendering(current_frame.cmd_buffer);
 
   if (!Image::transition_image_layout(current_frame.cmd_buffer, m_images[m_current_image_index],
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR))
