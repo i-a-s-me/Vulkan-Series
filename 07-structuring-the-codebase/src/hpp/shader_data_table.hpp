@@ -21,19 +21,21 @@ class ShaderDataTable
   };
 
   public:
-  static Result<Box<ShaderDataTable>> create(VkDevice device, std::span<const EntryDescription> entries);
+  static Result<Box<ShaderDataTable>> create(VkDevice device, std::span<const EntryDescription> entries,
+                                             uint32_t frame_count);
 
   ShaderDataTable(const ShaderDataTable &) = delete;
   ShaderDataTable &operator=(const ShaderDataTable &) = delete;
-  
+
   ~ShaderDataTable();
 
-  bool write_image_entry(const std::string &name, const Image *image, VkSampler sampler, uint32_t index = 0);
-  bool write_buffer_entry(const std::string &name, const Buffer *buffer, VkDeviceSize offset = 0, VkDeviceSize size = 0,
-                          uint32_t index = 0);
+  bool write_image_entry(const std::string &name, uint32_t frame_index, const Image *image, VkSampler sampler,
+                         uint32_t index = 0);
+  bool write_buffer_entry(const std::string &name, uint32_t frame_index, const Buffer *buffer, VkDeviceSize offset = 0,
+                          VkDeviceSize size = 0, uint32_t index = 0);
   void flush_writes();
 
-  void bind(VkCommandBuffer cmd);
+  void bind(VkCommandBuffer cmd, uint32_t frame_index);
 
   VkPipelineLayout get_pipeline_layout() const
   {
@@ -49,6 +51,7 @@ class ShaderDataTable
   VkDevice m_device{};
 
   VkDescriptorPool m_pool{};
+  uint32_t m_sets_per_frame{};
   VkPipelineLayout m_pipeline_layout{};
   std::vector<VkDescriptorSet> m_sets{};
   std::vector<VkDescriptorSetLayout> m_set_layouts{};

@@ -3,18 +3,18 @@
 
 #include <shader_data_table.hpp>
 
-Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<const EntryDescription> entries)
+Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<const EntryDescription> entries,
+                                                     uint32_t frame_count)
 {
   Box<ShaderDataTable> table{new ShaderDataTable(device)};
 
-  uint32_t set_count{};
   for (const auto &entry : entries)
   {
-    set_count = std::max(entry.set + 1, set_count);
+    table->m_sets_per_frame = std::max(entry.set + 1, table->m_sets_per_frame);
   }
 
   std::map<VkDescriptorType, uint32_t> descriptor_counts{};
-  std::vector<std::vector<VkDescriptorSetLayoutBinding>> bindings{set_count};
+  std::vector<std::vector<VkDescriptorSetLayoutBinding>> bindings{table->m_sets_per_frame};
   for (const auto &entry : entries)
   {
     bindings[entry.set].push_back({
@@ -29,8 +29,8 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
     table->m_entry_map[entry.name] = {entry.set, entry.binding};
   }
 
-  table->m_set_layouts.resize(set_count);
-  for (uint32_t i = 0; i < set_count; i++)
+  table->m_set_layouts.resize(table->m_sets_per_frame);
+  for (uint32_t i = 0; i < table->m_sets_per_frame; i++)
   {
     VkDescriptorSetLayoutCreateInfo set_layout_create_info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -55,12 +55,12 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
   std::vector<VkDescriptorPoolSize> pool_sizes{};
   for (const auto &dc : descriptor_counts)
   {
-    pool_sizes.push_back({.type = dc.first, .descriptorCount = dc.second});
+    pool_sizes.push_back({.type = dc.first, .descriptorCount = dc.second * frame_count});
   }
 
   VkDescriptorPoolCreateInfo pool_create_info{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-      .maxSets = set_count,
+      .maxSets = table->m_sets_per_frame * frame_count,
       .poolSizeCount = (uint32_t) pool_sizes.size(),
       .pPoolSizes = pool_sizes.data(),
   };
@@ -68,16 +68,28 @@ Result<Box<ShaderDataTable>> ShaderDataTable::create(VkDevice device, std::span<
   if (vkCreateDescriptorPool(device, &pool_create_info, nullptr, &table->m_pool) != VK_SUCCESS)
     return "Failed to create the descriptor pool";
 
-  table->m_sets.resize(set_count);
-  VkDescriptorSetAllocateInfo alloc_info{
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      .descriptorPool = table->m_pool,
-      .descriptorSetCount = (uint32_t) table->m_set_layouts.size(),
-      .pSetLayouts = table->m_set_layouts.data(),
-  };
+  {
+    table->m_sets.resize(table->m_sets_per_frame * frame_count);
 
-  if (vkAllocateDescriptorSets(device, &alloc_info, table->m_sets.data()) != VK_SUCCESS)
-    return "Failed to allocate descriptor sets";
+    std::vector<VkDescriptorSetLayout> layouts(table->m_sets.size());
+    for (uint32_t i = 0; i < frame_count; i++)
+    {
+      for (uint32_t j = 0; j < table->m_sets_per_frame; j++)
+      {
+        layouts[(i * table->m_sets_per_frame) + j] = table->m_set_layouts[j];
+      }
+    }
+
+    VkDescriptorSetAllocateInfo alloc_info{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = table->m_pool,
+        .descriptorSetCount = (uint32_t) layouts.size(),
+        .pSetLayouts = layouts.data(),
+    };
+
+    if (vkAllocateDescriptorSets(device, &alloc_info, table->m_sets.data()) != VK_SUCCESS)
+      return "Failed to allocate descriptor sets";
+  }
 
   return table;
 }
@@ -98,7 +110,8 @@ ShaderDataTable::~ShaderDataTable()
     vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
 }
 
-bool ShaderDataTable::write_image_entry(const std::string &name, const Image *image, VkSampler sampler, uint32_t index)
+bool ShaderDataTable::write_image_entry(const std::string &name, uint32_t frame_index, const Image *image,
+                                        VkSampler sampler, uint32_t index)
 {
   const auto entry = m_entry_map.find(name);
   if (entry == m_entry_map.end())
@@ -112,7 +125,7 @@ bool ShaderDataTable::write_image_entry(const std::string &name, const Image *im
 
   m_queued_writes.push_back({
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = m_sets[entry->second.first],
+      .dstSet = m_sets[(frame_index * m_sets_per_frame) + entry->second.first],
       .dstBinding = entry->second.second,
       .dstArrayElement = index,
       .descriptorCount = 1,
@@ -123,8 +136,8 @@ bool ShaderDataTable::write_image_entry(const std::string &name, const Image *im
   return true;
 }
 
-bool ShaderDataTable::write_buffer_entry(const std::string &name, const Buffer *buffer, VkDeviceSize offset,
-                                         VkDeviceSize size, uint32_t index)
+bool ShaderDataTable::write_buffer_entry(const std::string &name, uint32_t frame_index, const Buffer *buffer,
+                                         VkDeviceSize offset, VkDeviceSize size, uint32_t index)
 {
   const auto entry = m_entry_map.find(name);
   if (entry == m_entry_map.end())
@@ -138,7 +151,7 @@ bool ShaderDataTable::write_buffer_entry(const std::string &name, const Buffer *
 
   m_queued_writes.push_back({
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = m_sets[entry->second.first],
+      .dstSet = m_sets[(frame_index * m_sets_per_frame) + entry->second.first],
       .dstBinding = entry->second.second,
       .dstArrayElement = index,
       .descriptorCount = 1,
@@ -162,8 +175,8 @@ void ShaderDataTable::flush_writes()
   m_queued_writes.clear();
 }
 
-void ShaderDataTable::bind(VkCommandBuffer cmd)
+void ShaderDataTable::bind(VkCommandBuffer cmd, uint32_t frame_index)
 {
-  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, m_sets.size(), m_sets.data(), 0,
-                          nullptr);
+  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, m_sets_per_frame,
+                          &m_sets[frame_index * m_sets_per_frame], 0, nullptr);
 }

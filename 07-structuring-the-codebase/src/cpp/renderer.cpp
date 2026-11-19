@@ -53,7 +53,7 @@ Renderer::~Renderer()
   m_vertex_buffer.reset();
   m_index_buffer.reset();
   m_staging_buffer.reset();
-  m_vertex_uniform_buffer.reset();
+  m_vertex_uniform_buffers.clear();
 }
 
 Result<> Renderer::on_create()
@@ -76,7 +76,8 @@ Result<> Renderer::on_create()
                                                       .count = 1,
                                                       .stages = VK_SHADER_STAGE_FRAGMENT_BIT,
                                                   },
-                                              }),
+                                              },
+                                              Swapchain::NUM_CONCURRENT_FRAMES),
                       m_shader_data_table);
 
   std::vector<uint32_t> vertex_shader_data, fragment_shader_data{};
@@ -115,16 +116,11 @@ Result<> Renderer::on_create()
   CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(CUBE_MESH_INDICES), Buffer::EUsage::INDEX),
                       m_index_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
-                      m_vertex_uniform_buffer);
-
+  m_vertex_uniform_buffers.resize(Swapchain::NUM_CONCURRENT_FRAMES);
+  for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
   {
-    m_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    m_vertex_uniform_data.view =
-        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    if (!m_vertex_uniform_buffer->copy_from_cpu(&m_vertex_uniform_data, sizeof(m_vertex_uniform_data)))
-      return "Failed to copy data to uniform buffer";
+    CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
+                        m_vertex_uniform_buffers[i]);
   }
 
   { // copy VERTICES to vertex buffer
@@ -219,13 +215,22 @@ Result<> Renderer::on_create()
     }));
   }
 
-  if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", m_vertex_uniform_buffer.get()))
-    return "Failed to write uniform buffer to shader data table";
+  for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
+  {
+    if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", i, m_vertex_uniform_buffers[i].get()))
+      return "Failed to write uniform buffer to shader data table";
+  }
 
-  if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler))
-    return "Failed to write texture image to shader data table";
+  for (uint32_t i = 0; i < Swapchain::NUM_CONCURRENT_FRAMES; i++)
+  {
+    if (!m_shader_data_table->write_image_entry("texture_sampler", i, m_texture_image.get(), m_texture_sampler))
+      return "Failed to write texture image to shader data table";
+  }
 
   m_shader_data_table->flush_writes();
+
+  m_vertex_uniform_data.view =
+      glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
   return Ok();
 }
@@ -248,7 +253,8 @@ Result<> Renderer::render()
     m_vertex_uniform_data.model =
         glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f)) *
         glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
-    m_vertex_uniform_buffer->copy_from_cpu(&m_vertex_uniform_data, sizeof(m_vertex_uniform_data));
+    m_vertex_uniform_buffers[m_swapchain->get_current_frame_index()]->copy_from_cpu(&m_vertex_uniform_data,
+                                                                                    sizeof(m_vertex_uniform_data));
   }
 
   VkRenderingAttachmentInfo color_attachment_info{
@@ -319,7 +325,7 @@ Result<> Renderer::render()
   m_vertex_buffer->bind(cmd);
   m_index_buffer->bind(cmd);
 
-  m_shader_data_table->bind(cmd);
+  m_shader_data_table->bind(cmd, m_swapchain->get_current_frame_index());
 
   vkCmdDrawIndexed(cmd, sizeof(CUBE_MESH_INDICES) / sizeof(CUBE_MESH_INDICES[0]), 1, 0, 0, 0);
 

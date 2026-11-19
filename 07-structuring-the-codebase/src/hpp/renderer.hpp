@@ -41,7 +41,6 @@ class Renderer
   Box<Buffer> m_staging_buffer{};
   Box<Buffer> m_vertex_buffer{};
   Box<Buffer> m_index_buffer{};
-  Box<Buffer> m_vertex_uniform_buffer{};
 
   Box<Image> m_texture_image{};
   VkSampler m_texture_sampler{};
@@ -49,4 +48,5 @@ class Renderer
   Box<ShaderDataTable> m_shader_data_table{};
 
   VertexUniformData m_vertex_uniform_data{};
+  std::vector<Box<Buffer>> m_vertex_uniform_buffers{};
 };
