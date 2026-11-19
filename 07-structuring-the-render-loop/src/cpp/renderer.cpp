@@ -79,59 +79,42 @@ static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &pa
   return std::move(data);
 }
 
-Renderer::~Renderer()
-{
-  if (!m_core || !m_core->get_device())
-    return;
-
-  m_core->wait_idle();
-
-  m_texture_image.reset();
-
-  vkDestroySampler(m_core->get_device(), m_texture_sampler, nullptr);
-
-  m_graphics_pipeline.reset();
-  m_shader_data_table.reset();
-
-  m_vertex_buffer.reset();
-  m_index_buffer.reset();
-  m_staging_buffer.reset();
-  m_vertex_uniform_buffer.reset();
-}
-
-Result<> Renderer::initialize(
+Result<Box<Renderer>> Renderer::create(
     std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
+  Box<Renderer> renderer(new Renderer());
+
   VkExtent2D inital_extent{};
 
-  CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, inital_extent), m_core);
+  CHECK_ASSIGN_RESULT(VulkanCore::create(surface_creation_callback, inital_extent), renderer->m_core);
 
-  CHECK_ASSIGN_RESULT(Swapchain::create(m_core.get(), inital_extent), m_swapchain);
+  CHECK_ASSIGN_RESULT(Swapchain::create(renderer->m_core.get(), inital_extent), renderer->m_swapchain);
 
-  on_swapchain_resize(inital_extent);
+  renderer->on_swapchain_resize(inital_extent);
 
-  m_swapchain->register_resize_callback([this](VkExtent2D extent) { this->on_swapchain_resize(extent); });
+  renderer->m_swapchain->register_resize_callback(
+      [renderer = renderer.get()](VkExtent2D extent) { renderer->on_swapchain_resize(extent); });
 
-  CHECK_ASSIGN_RESULT(ShaderDataTable::create(m_core->get_device(),
-                                       std::initializer_list<ShaderDataTable::EntryDescription>{
-                                           {
-                                               .name = "vertex_uniform_data",
-                                               .set = 0,
-                                               .binding = 0,
-                                               .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                               .count = 1,
-                                               .stages = VK_SHADER_STAGE_VERTEX_BIT,
-                                           },
-                                           {
-                                               .name = "texture_sampler",
-                                               .set = 1,
-                                               .binding = 0,
-                                               .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                               .count = 1,
-                                               .stages = VK_SHADER_STAGE_FRAGMENT_BIT,
-                                           },
-                                       }),
-               m_shader_data_table);
+  CHECK_ASSIGN_RESULT(ShaderDataTable::create(renderer->m_core->get_device(),
+                                              std::initializer_list<ShaderDataTable::EntryDescription>{
+                                                  {
+                                                      .name = "vertex_uniform_data",
+                                                      .set = 0,
+                                                      .binding = 0,
+                                                      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                      .count = 1,
+                                                      .stages = VK_SHADER_STAGE_VERTEX_BIT,
+                                                  },
+                                                  {
+                                                      .name = "texture_sampler",
+                                                      .set = 1,
+                                                      .binding = 0,
+                                                      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                      .count = 1,
+                                                      .stages = VK_SHADER_STAGE_FRAGMENT_BIT,
+                                                  },
+                                              }),
+                      renderer->m_shader_data_table);
 
   std::vector<uint32_t> vertex_shader_data, fragment_shader_data{};
   CHECK_ASSIGN_RESULT(load_shader_from_file("resources/default.vert.spv"), vertex_shader_data);
@@ -139,7 +122,8 @@ Result<> Renderer::initialize(
 
   CHECK_ASSIGN_RESULT(
       Pipeline::create(
-          m_core->get_device(), m_swapchain->get_color_format(), m_swapchain->get_depth_format(),
+          renderer->m_core->get_device(), renderer->m_swapchain->get_color_format(),
+          renderer->m_swapchain->get_depth_format(),
           std::initializer_list<VkVertexInputBindingDescription>{
               {.binding = 0, .stride = sizeof(Vertex), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX},
           },
@@ -153,43 +137,47 @@ Result<> Renderer::initialize(
               VkVertexInputAttributeDescription{
                   .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, texcoord)},
           },
-          m_shader_data_table.get(), vertex_shader_data, fragment_shader_data),
-      m_graphics_pipeline);
+          renderer->m_shader_data_table.get(), vertex_shader_data, fragment_shader_data),
+      renderer->m_graphics_pipeline);
 
   CHECK_ASSIGN_RESULT(
-      Buffer::create(m_core->get_allocator(),
+      Buffer::create(renderer->m_core->get_allocator(),
                      std::max(sizeof(VERTICES), sizeof(INDICES)), // maximum size we'll need for our staging operations
                      Buffer::EUsage::STAGING),
-      m_staging_buffer);
+      renderer->m_staging_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VERTICES), Buffer::EUsage::VERTEX), m_vertex_buffer);
+  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(VERTICES), Buffer::EUsage::VERTEX),
+                      renderer->m_vertex_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(INDICES), Buffer::EUsage::INDEX), m_index_buffer);
+  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(INDICES), Buffer::EUsage::INDEX),
+                      renderer->m_index_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
-               m_vertex_uniform_buffer);
+  CHECK_ASSIGN_RESULT(
+      Buffer::create(renderer->m_core->get_allocator(), sizeof(VertexUniformData), Buffer::EUsage::UNIFORM),
+      renderer->m_vertex_uniform_buffer);
 
   {
     g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     g_vertex_uniform_data.view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    if (!m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
+    if (!renderer->m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
       return "Failed to copy data to uniform buffer";
   }
 
   { // copy VERTICES to vertex buffer
-    if (!m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES)))
+    if (!renderer->m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES)))
       return "Failed to copy VERTICES to staging buffer";
 
-    CHECK_RESULT(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    CHECK_RESULT(renderer->m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
           .srcOffset = 0,
           .dstOffset = 0,
-          .size = m_vertex_buffer->get_size(),
+          .size = renderer->m_vertex_buffer->get_size(),
       };
 
-      vkCmdCopyBuffer(cmd, m_staging_buffer->get_handle(), m_vertex_buffer->get_handle(), 1, &copy_region);
+      vkCmdCopyBuffer(cmd, renderer->m_staging_buffer->get_handle(), renderer->m_vertex_buffer->get_handle(), 1,
+                      &copy_region);
 
       VkMemoryBarrier barrier{
           .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
@@ -204,17 +192,18 @@ Result<> Renderer::initialize(
   }
 
   { // copy INDICES to index buffer
-    if (!m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES)))
+    if (!renderer->m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES)))
       return "Failed to copy INDICES to staging buffer";
 
-    CHECK_RESULT(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+    CHECK_RESULT(renderer->m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
       VkBufferCopy copy_region{
           .srcOffset = 0,
           .dstOffset = 0,
-          .size = m_index_buffer->get_size(),
+          .size = renderer->m_index_buffer->get_size(),
       };
 
-      vkCmdCopyBuffer(cmd, m_staging_buffer->get_handle(), m_index_buffer->get_handle(), 1, &copy_region);
+      vkCmdCopyBuffer(cmd, renderer->m_staging_buffer->get_handle(), renderer->m_index_buffer->get_handle(), 1,
+                      &copy_region);
 
       VkMemoryBarrier barrier{
           .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
@@ -238,7 +227,8 @@ Result<> Renderer::initialize(
         .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
     };
 
-    if (vkCreateSampler(m_core->get_device(), &create_info, nullptr, &m_texture_sampler) != VK_SUCCESS)
+    if (vkCreateSampler(renderer->m_core->get_device(), &create_info, nullptr, &renderer->m_texture_sampler) !=
+        VK_SUCCESS)
       return "Failed to create the texture sampler";
   }
 
@@ -249,35 +239,59 @@ Result<> Renderer::initialize(
     if (!Image::load_rgba_from_file("resources/Ground037_1K-PNG_Color.png", pixels, extent))
       return "Failed to load texture data from the disk";
 
-    CHECK_ASSIGN_RESULT(Image::create(m_core->get_device(), m_core->get_allocator(), VK_FORMAT_R8G8B8A8_SRGB, extent,
-                               VK_IMAGE_USAGE_SAMPLED_BIT |
-                                   VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader
-                                                                   // and copy data from staging buffer into this image.
-                               ),
-                 m_texture_image);
+    CHECK_ASSIGN_RESULT(
+        Image::create(renderer->m_core->get_device(), renderer->m_core->get_allocator(), VK_FORMAT_R8G8B8A8_SRGB,
+                      extent,
+                      VK_IMAGE_USAGE_SAMPLED_BIT |
+                          VK_IMAGE_USAGE_TRANSFER_DST_BIT // We want to sample this image from fragment shader
+                                                          // and copy data from staging buffer into this image.
+                      ),
+        renderer->m_texture_image);
 
-    CHECK_RESULT(m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
-      if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
+    CHECK_RESULT(renderer->m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
+      if (!renderer->m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
 
-      CHECK_RESULT(m_texture_image->copy_from_cpu(cmd, pixels.data(), pixels.size()));
+      CHECK_RESULT(renderer->m_texture_image->copy_from_cpu(cmd, pixels.data(), pixels.size()));
 
-      if (!m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
+      if (!renderer->m_texture_image->transition_layout(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL))
         return "Failed to transition texture image to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";
 
       return Ok{};
     }));
   }
 
-  if (!m_shader_data_table->write_buffer_entry("vertex_uniform_data", m_vertex_uniform_buffer.get()))
+  if (!renderer->m_shader_data_table->write_buffer_entry("vertex_uniform_data",
+                                                         renderer->m_vertex_uniform_buffer.get()))
     return "Failed to write uniform buffer to shader data table";
 
-  if (!m_shader_data_table->write_image_entry("texture_sampler", m_texture_image.get(), m_texture_sampler))
+  if (!renderer->m_shader_data_table->write_image_entry("texture_sampler", renderer->m_texture_image.get(),
+                                                        renderer->m_texture_sampler))
     return "Failed to write texture image to shader data table";
 
-  m_shader_data_table->flush_writes();
+  renderer->m_shader_data_table->flush_writes();
 
-  return Ok();
+  return renderer;
+}
+
+Renderer::~Renderer()
+{
+  if (!m_core || !m_core->get_device())
+    return;
+
+  m_core->wait_idle();
+
+  m_texture_image.reset();
+
+  vkDestroySampler(m_core->get_device(), m_texture_sampler, nullptr);
+
+  m_graphics_pipeline.reset();
+  m_shader_data_table.reset();
+
+  m_vertex_buffer.reset();
+  m_index_buffer.reset();
+  m_staging_buffer.reset();
+  m_vertex_uniform_buffer.reset();
 }
 
 Result<> Renderer::render()

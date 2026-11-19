@@ -13,19 +13,21 @@
 class Renderer
 {
   public:
-  Renderer() = default;
+  static Result<Box<Renderer>> create(
+      std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
+
   Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
 
   ~Renderer();
 
-  Result<> initialize(std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
-
   Result<> render();
 
   void resize(uint32_t fb_width, uint32_t fb_height);
 
-private:
+  private:
+  Renderer() = default;
+
   void on_swapchain_resize(VkExtent2D extent);
 
   private:

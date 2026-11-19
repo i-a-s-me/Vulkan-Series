@@ -9,66 +9,61 @@ class SampleApp
   static constexpr uint32_t SCREEN_HEIGHT = 600;
 
   public:
-  int launch(int argc, char *argv[]);
+  Result<int> launch(int argc, char *argv[]);
 
   ~SampleApp();
 
   private:
   GLFWwindow *m_window{};
-  Box<Renderer> m_vulkan{};
+  Box<Renderer> m_renderer{};
 };
 
 int main(int argc, char *argv[])
 {
   SampleApp app;
-  return app.launch(argc, argv);
-}
-
-int SampleApp::launch(int argc, char *argv[])
-{
-  if (!glfwInit())
+  const auto result = app.launch(argc, argv);
+  if (result.is_error())
   {
-    printf("Failed to initialize GLFW\n");
+    printf("ERROR: %s\n", result.get_error().c_str());
     return -1;
   }
+  return result.get_value();
+}
+
+Result<int> SampleApp::launch(int argc, char *argv[])
+{
+  if (!glfwInit())
+    return "Failed to initialize GLFW";
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   m_window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "i-a-s.me Vulkan Sample", nullptr, nullptr);
   if (!m_window)
-  {
-    printf("Failed to create GLFW window\n");
-    return -1;
-  }
+    return "Failed to create GLFW window";
 
-  m_vulkan = Box<Renderer>(new Renderer());
-  auto result = m_vulkan->initialize([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
-                                                VkSurfaceKHR &out_surface) -> bool {
-        if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
-        {
-          printf("Failed to create Vulkan surface\n");
-          return false;
-        }
+  CHECK_ASSIGN_RESULT(Renderer::create([window = m_window](VkInstance instance, uint32_t &out_width,
+                                                           uint32_t &out_height, VkSurfaceKHR &out_surface) -> bool {
+                        if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
+                        {
+                          printf("Failed to create Vulkan surface\n");
+                          return false;
+                        }
 
-        int32_t fb_width{}, fb_height{};
-        glfwGetFramebufferSize(window, &fb_width, &fb_height);
-        while ((fb_width == 0) || (fb_height == 0))
-        {
-          glfwWaitEvents();
-          glfwGetFramebufferSize(window, &fb_width, &fb_height);
-        }
+                        int32_t fb_width{}, fb_height{};
+                        glfwGetFramebufferSize(window, &fb_width, &fb_height);
+                        while ((fb_width == 0) || (fb_height == 0))
+                        {
+                          glfwWaitEvents();
+                          glfwGetFramebufferSize(window, &fb_width, &fb_height);
+                        }
 
-        out_width = (uint32_t) fb_width;
-        out_height = (uint32_t) fb_height;
+                        out_width = (uint32_t) fb_width;
+                        out_height = (uint32_t) fb_height;
 
-        return true;
-      });
-  if (result.is_error())
-  {
-    printf("Failed to initialize Vulkan: %s\n", result.get_error().c_str());
-    return -1;
-  }
+                        return true;
+                      }),
+                      m_renderer);
 
-  glfwSetWindowUserPointer(m_window, m_vulkan.get());
+  glfwSetWindowUserPointer(m_window, m_renderer.get());
 
   glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow *window, int width, int height) {
     int32_t fb_width{}, fb_height{};
@@ -94,8 +89,7 @@ int SampleApp::launch(int argc, char *argv[])
       continue;
     }
 
-    if (m_vulkan->render().is_error())
-      break;
+    CHECK_RESULT(m_renderer->render());
   }
 
   return 0;
@@ -103,7 +97,7 @@ int SampleApp::launch(int argc, char *argv[])
 
 SampleApp::~SampleApp()
 {
-  m_vulkan.reset();
+  m_renderer.reset();
 
   if (m_window)
     glfwDestroyWindow(m_window);
