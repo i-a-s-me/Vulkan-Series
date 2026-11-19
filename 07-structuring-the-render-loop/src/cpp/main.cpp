@@ -40,28 +40,26 @@ Result<int> SampleApp::launch(int argc, char *argv[])
   if (!m_window)
     return "Failed to create GLFW window";
 
-  CHECK_ASSIGN_RESULT(Renderer::create([window = m_window](VkInstance instance, uint32_t &out_width,
-                                                           uint32_t &out_height, VkSurfaceKHR &out_surface) -> bool {
-                        if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
-                        {
-                          printf("Failed to create Vulkan surface\n");
-                          return false;
-                        }
+  CHECK_ASSIGN_RESULT(
+      Renderer::create([window = m_window](VkInstance instance, uint32_t &out_width, uint32_t &out_height,
+                                           VkSurfaceKHR &out_surface) -> Result<> {
+        if (glfwCreateWindowSurface(instance, window, nullptr, &out_surface) != VK_SUCCESS)
+          return "Failed to create Vulkan surface";
 
-                        int32_t fb_width{}, fb_height{};
-                        glfwGetFramebufferSize(window, &fb_width, &fb_height);
-                        while ((fb_width == 0) || (fb_height == 0))
-                        {
-                          glfwWaitEvents();
-                          glfwGetFramebufferSize(window, &fb_width, &fb_height);
-                        }
+        int32_t fb_width{}, fb_height{};
+        glfwGetFramebufferSize(window, &fb_width, &fb_height);
+        while ((fb_width == 0) || (fb_height == 0))
+        {
+          glfwWaitEvents();
+          glfwGetFramebufferSize(window, &fb_width, &fb_height);
+        }
 
-                        out_width = (uint32_t) fb_width;
-                        out_height = (uint32_t) fb_height;
+        out_width = (uint32_t) fb_width;
+        out_height = (uint32_t) fb_height;
 
-                        return true;
-                      }),
-                      m_renderer);
+        return Ok();
+      }),
+      m_renderer);
 
   glfwSetWindowUserPointer(m_window, m_renderer.get());
 

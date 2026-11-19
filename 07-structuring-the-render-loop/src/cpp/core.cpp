@@ -4,16 +4,13 @@
 #include <core.hpp>
 
 Result<Box<VulkanCore>> VulkanCore::create(
-    std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
+    std::function<Result<>(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback,
     VkExtent2D &initial_surface_extent)
 {
   Box<VulkanCore> core(new VulkanCore());
 
   CHECK_RESULT(core->create_instance());
-
-  if (!surface_creation_callback(core->m_instance, initial_surface_extent.width, initial_surface_extent.height, core->m_surface))
-    return "Failed to create Vulkan surface";
-
+  CHECK_RESULT(surface_creation_callback(core->m_instance, initial_surface_extent.width, initial_surface_extent.height, core->m_surface));
   CHECK_RESULT(core->select_physical_device());
   CHECK_RESULT(core->create_device());
   CHECK_RESULT(core->create_allocator());

@@ -80,7 +80,7 @@ static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &pa
 }
 
 Result<Box<Renderer>> Renderer::create(
-    std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
+    std::function<Result<>(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback)
 {
   Box<Renderer> renderer(new Renderer());
 

@@ -14,7 +14,7 @@ class Renderer
 {
   public:
   static Result<Box<Renderer>> create(
-      std::function<bool(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
+      std::function<Result<>(VkInstance, uint32_t &, uint32_t &, VkSurfaceKHR &)> surface_creation_callback);
 
   Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
