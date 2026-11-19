@@ -233,7 +233,13 @@ Renderer::~Renderer()
 
 Result<> Renderer::render()
 {
-  {
+  VkCommandBuffer cmd;
+  CHECK_ASSIGN_RESULT(m_swapchain->begin_frame(), cmd);
+
+  if (cmd == VK_NULL_HANDLE)
+    return Ok();
+
+  { // Update Uniform Data
     static constexpr float SPEED = glm::radians(90.0f);
     static auto start_time = std::chrono::steady_clock::now();
 
@@ -245,12 +251,6 @@ Result<> Renderer::render()
         glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
     m_vertex_uniform_buffer->copy_from_cpu(&m_vertex_uniform_data, sizeof(m_vertex_uniform_data));
   }
-
-  VkCommandBuffer cmd;
-  CHECK_ASSIGN_RESULT(m_swapchain->begin_frame(), cmd);
-
-  if (cmd == VK_NULL_HANDLE)
-    return Ok();
 
   m_graphics_pipeline->bind(cmd);
 
