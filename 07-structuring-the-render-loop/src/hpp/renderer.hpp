@@ -28,6 +28,8 @@ class Renderer
   private:
   Renderer() = default;
 
+  Result<> on_create();
+
   void on_swapchain_resize();
 
   private:
