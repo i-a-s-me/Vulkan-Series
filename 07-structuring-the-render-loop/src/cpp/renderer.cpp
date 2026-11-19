@@ -5,66 +5,6 @@
 
 #include <fstream>
 
-struct Vertex
-{
-  glm::vec3 pos;
-  glm::vec3 colour;
-  glm::vec2 texcoord;
-};
-
-struct VertexUniformData
-{
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 projection;
-} g_vertex_uniform_data;
-
-static const Vertex VERTICES[24] = {
-    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-    {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-
-    {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
-    {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-    {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-};
-
-static const uint32_t INDICES[36] = {
-    0,  1,  2,  2,  3,  0,
-
-    4,  5,  6,  6,  7,  4,
-
-    8,  9,  10, 10, 11, 8,
-
-    12, 13, 14, 14, 15, 12,
-
-    16, 17, 18, 18, 19, 16,
-
-    20, 21, 22, 22, 23, 20,
-};
-
 static Result<std::vector<uint32_t>> load_shader_from_file(const std::string &path)
 {
   std::ifstream f(path, std::ios::in | std::ios::binary | std::ios::ate);
@@ -142,14 +82,14 @@ Result<Box<Renderer>> Renderer::create(
 
   CHECK_ASSIGN_RESULT(
       Buffer::create(renderer->m_core->get_allocator(),
-                     std::max(sizeof(VERTICES), sizeof(INDICES)), // maximum size we'll need for our staging operations
+                     std::max(sizeof(CUBE_MESH_VERTICES), sizeof(CUBE_MESH_INDICES)), // maximum size we'll need for our staging operations
                      Buffer::EUsage::STAGING),
       renderer->m_staging_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(VERTICES), Buffer::EUsage::VERTEX),
+  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_VERTICES), Buffer::EUsage::VERTEX),
                       renderer->m_vertex_buffer);
 
-  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(INDICES), Buffer::EUsage::INDEX),
+  CHECK_ASSIGN_RESULT(Buffer::create(renderer->m_core->get_allocator(), sizeof(CUBE_MESH_INDICES), Buffer::EUsage::INDEX),
                       renderer->m_index_buffer);
 
   CHECK_ASSIGN_RESULT(
@@ -157,16 +97,16 @@ Result<Box<Renderer>> Renderer::create(
       renderer->m_vertex_uniform_buffer);
 
   {
-    g_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    g_vertex_uniform_data.view =
+    renderer->m_vertex_uniform_data.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    renderer->m_vertex_uniform_data.view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.75f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    if (!renderer->m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data)))
+    if (!renderer->m_vertex_uniform_buffer->copy_from_cpu(&renderer->m_vertex_uniform_data, sizeof(m_vertex_uniform_data)))
       return "Failed to copy data to uniform buffer";
   }
 
   { // copy VERTICES to vertex buffer
-    if (!renderer->m_staging_buffer->copy_from_cpu(VERTICES, sizeof(VERTICES)))
+    if (!renderer->m_staging_buffer->copy_from_cpu(CUBE_MESH_VERTICES, sizeof(CUBE_MESH_VERTICES)))
       return "Failed to copy VERTICES to staging buffer";
 
     CHECK_RESULT(renderer->m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
@@ -192,7 +132,7 @@ Result<Box<Renderer>> Renderer::create(
   }
 
   { // copy INDICES to index buffer
-    if (!renderer->m_staging_buffer->copy_from_cpu(INDICES, sizeof(INDICES)))
+    if (!renderer->m_staging_buffer->copy_from_cpu(CUBE_MESH_INDICES, sizeof(CUBE_MESH_INDICES)))
       return "Failed to copy INDICES to staging buffer";
 
     CHECK_RESULT(renderer->m_core->execute_single_shot_commands([&](VkCommandBuffer cmd) -> Result<> {
@@ -303,10 +243,10 @@ Result<> Renderer::render()
     const auto current_time = std::chrono::steady_clock::now();
     const auto seconds = std::chrono::duration<float>(current_time - start_time).count();
 
-    g_vertex_uniform_data.model =
+    m_vertex_uniform_data.model =
         glm::rotate(glm::mat4(1.0f), std::fmod(seconds * SPEED, glm::two_pi<float>()), glm::vec3(1.0f, 1.0f, 1.0f)) *
         glm::scale(glm::mat4(1.0f), glm::vec3(0.25f));
-    m_vertex_uniform_buffer->copy_from_cpu(&g_vertex_uniform_data, sizeof(g_vertex_uniform_data));
+    m_vertex_uniform_buffer->copy_from_cpu(&m_vertex_uniform_data, sizeof(m_vertex_uniform_data));
   }
 
   VkCommandBuffer cmd;
@@ -322,7 +262,7 @@ Result<> Renderer::render()
 
   m_shader_data_table->bind(cmd);
 
-  vkCmdDrawIndexed(cmd, sizeof(INDICES) / sizeof(INDICES[0]), 1, 0, 0, 0);
+  vkCmdDrawIndexed(cmd, sizeof(CUBE_MESH_INDICES) / sizeof(CUBE_MESH_INDICES[0]), 1, 0, 0, 0);
 
   CHECK_RESULT(m_swapchain->end_frame());
 
@@ -336,7 +276,7 @@ void Renderer::resize(uint32_t fb_width, uint32_t fb_height)
 
 void Renderer::on_swapchain_resize(VkExtent2D extent)
 {
-  g_vertex_uniform_data.projection =
+  m_vertex_uniform_data.projection =
       glm::perspective(glm::half_pi<float>(), (float) extent.width / (float) extent.height, 0.1f, 1.0f);
-  g_vertex_uniform_data.projection[1][1] *= -1.0f;
+  m_vertex_uniform_data.projection[1][1] *= -1.0f;
 }

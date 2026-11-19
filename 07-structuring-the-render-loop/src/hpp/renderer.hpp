@@ -45,4 +45,6 @@ class Renderer
   VkSampler m_texture_sampler{};
 
   Box<ShaderDataTable> m_shader_data_table{};
+
+  VertexUniformData m_vertex_uniform_data{};
 };
